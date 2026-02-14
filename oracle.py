@@ -1,12 +1,9 @@
 import os
 import json
 import requests
-import pandas as pd
 import gspread
 import xml.etree.ElementTree as ET
-from fmiopendata.wfs import download_stored_query
 from datetime import datetime, timedelta, timezone
-import numpy as np
 from google.oauth2.service_account import Credentials
 
 # 1. Telegram-viestit
