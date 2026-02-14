@@ -40,12 +40,16 @@ def get_windguru_data():
 
 def main():
     try:
-        # 3. Yhteys Sheetiin
+       # 3. Yhteys Sheetiin (PÄIVITETTY SCOPES)
         creds_json = os.environ.get('GCP_SERVICE_ACCOUNT_KEY')
         if not creds_json:
             raise ValueError("GCP_SERVICE_ACCOUNT_KEY puuttuu!")
 
-        scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+        # Lisätään kaksi eri oikeutta: Sheets ja Drive
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
         with open('temp_creds.json', 'w') as f:
             f.write(creds_json)
         
