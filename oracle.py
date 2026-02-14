@@ -19,8 +19,8 @@ def send_tg(msg):
 def get_fmi():
     url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::observations::weather::latest::multipointcoverage&fmisid=101000&parameters=ws_10min,wg_10min,wd_10min"
     res = requests.get(url, timeout=15)
-    # TÄSSÄ OLI VIRHE: Jos palautettiin res eikä res.text, tuli se <Response [200]>
-    root = ET.fromstring(res.text)
+    # TÄRKEÄÄ: Käytetään res.content, jotta XML-pureskelu onnistuu varmasti
+    root = ET.fromstring(res.content)
     for elem in root.iter():
         if elem.tag.endswith('doubleOrNilReasonTupleList'):
             raw_data = elem.text.strip().split()
@@ -31,13 +31,13 @@ def get_fmi():
 def get_wg():
     url = "https://www.windguru.cz/int/iapi.php?q=station_data_current&id_station=1336"
     res = requests.get(url, timeout=15)
+    # TÄRKEÄÄ: Muutetaan vastaus heti dictionaryksi
     d = res.json()
     return str(d.get('wind_avg', 0)), str(d.get('wind_max', 0)), str(d.get('wind_direction', 0))
 
 def main():
     print("Aloitetaan...")
     try:
-        # 1. Creds
         key_json = os.environ.get('GCP_SERVICE_ACCOUNT_KEY')
         if not key_json:
             raise Exception("Key missing")
@@ -46,34 +46,34 @@ def main():
         creds = Credentials.from_service_account_info(json.loads(key_json), scopes=scopes)
         client = gspread.authorize(creds)
         
-        # 2. Sheet
         sheet = client.open("Laru_Oracle_Data").get_worksheet(0)
         
-        # 3. Time & Dupe check
         now = datetime.now(timezone.utc) + timedelta(hours=2)
         hour_tag = now.strftime("%Y-%m-%d %H")
         
-        last_val = sheet.col_values(1)[-1] if sheet.col_values(1) else ""
-        if last_val.startswith(hour_tag):
+        # Haetaan vain ensimmäinen sarake duplikaattitarkistusta varten
+        col1 = sheet.col_values(1)
+        if col1 and col1[-1].startswith(hour_tag):
             print(f"Tunti {hour_tag} jo tehty.")
             return
 
-        # 4. Data
+        # Haetaan data
         f_ws, f_wg, f_wd = get_fmi()
         w_ws, w_wg, w_wd = get_wg()
         
         row = [now.strftime("%Y-%m-%d %H:%M"), f_ws, f_wg, f_wd, w_ws, w_wg, w_wd]
         
-        # 5. Save
         sheet.append_row(row)
         msg = f"✅ Laru: {now.strftime('%H:%M')} | FMI: {f_ws}m/s | WG: {w_ws}m/s"
         print(msg)
         send_tg(msg)
 
     except Exception as e:
-        err = f"❌ Virhe: {str(e)}"
-        print(err)
-        send_tg(err)
+        # Tässä oli se bugi: jos e oli Response-olio, se näkyi oudosti.
+        # Nyt pakotetaan virhe tekstiksi.
+        err_str = str(e)
+        print(f"Virhe: {err_str}")
+        send_tg(f"❌ Virhe: {err_str}")
 
 if __name__ == "__main__":
     main()
