@@ -53,21 +53,22 @@ def main():
         client = gspread.authorize(creds)
         sheet = client.open("Laru_Oracle_Data").get_worksheet(0)
         
-        # 4. Tuplatarkistus
-        all_rows = sheet.get_all_values()
-        # Pakotetaan Suomen aika (UTC + 2 tuntia, huom: kesäaikana +3)
-        # helpoin tapa on lisätä tunteja datetimeen:
-        current_time = datetime.now(timezone.utc) + timedelta(hours=2) 
+        # 4. Ajan hallinta (Suomen aika UTC+2)
+        current_time = datetime.now(timezone.utc) + timedelta(hours=2)
         current_hour_prefix = current_time.strftime("%Y-%m-%d %H")
 
+        # 5. Tuplatarkistus
+        all_rows = sheet.get_all_values()
         if all_rows:
             last_row = all_rows[-1]
-            # Katsotaan viimeisimmän rivin alku (esim. "2024-05-24 15")
             if last_row[0].startswith(current_hour_prefix):
-                print(f"Tunti {current_hour_prefix} jo hoidettu. Skipataan.")
+                msg = f"ℹ️ Tunti {current_hour_prefix} on jo tallennettu. Ei uusia merkintöjä."
+                print(msg)
+                # Voit poistaa tämän kommentin jos haluat viestin myös skippauksesta:
+                # send_telegram_message(msg)
                 return
 
-        # 5. VARSINAINEN DATAN HAKU
+        # 6. DATAN HAKU
         fmi_ws, fmi_wg, fmi_wd = get_fmi_data()
         wg_ws, wg_wg, wg_wd = get_windguru_data()
         
@@ -77,12 +78,15 @@ def main():
             wg_ws, wg_wg, wg_wd
         ]
         
-        # 6. TALLENNUS
+        # 7. TALLENNUS
         sheet.append_row(row)
-        print(f"✅ Tallennus onnistui: {row}")
+        success_msg = f"✅ Data tallennettu: {current_time.strftime('%H:%M')} (FMI: {fmi_ws} m/s)"
+        print(success_msg)
+        
+        # TÄMÄ ON SE TESTIVIESTI - poistetaan myöhemmin
+        send_telegram_message(success_msg)
 
     except Exception as e:
-        # 7. Virheilmoitus Telegramiin
         error_msg = f"❌ Laru-Oracle VIRHE: {str(e)}"
         print(error_msg)
         send_telegram_message(error_msg)
