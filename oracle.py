@@ -55,11 +55,14 @@ def main():
         
         # 4. Tuplatarkistus
         all_rows = sheet.get_all_values()
-        current_time = datetime.now()
+        # Pakotetaan Suomen aika (UTC + 2 tuntia, huom: kesäaikana +3)
+        # helpoin tapa on lisätä tunteja datetimeen:
+        current_time = datetime.now(timezone.utc) + timedelta(hours=2) 
         current_hour_prefix = current_time.strftime("%Y-%m-%d %H")
 
         if all_rows:
             last_row = all_rows[-1]
+            # Katsotaan viimeisimmän rivin alku (esim. "2024-05-24 15")
             if last_row[0].startswith(current_hour_prefix):
                 print(f"Tunti {current_hour_prefix} jo hoidettu. Skipataan.")
                 return
