@@ -1,99 +1,78 @@
 import os
-import json
 import requests
 import gspread
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from google.oauth2.service_account import Credentials
 
-def send_telegram_message(message):
+def send_tg(msg):
     token = os.environ.get('TELEGRAM_BOT_TOKEN')
     chat_id = os.environ.get('TELEGRAM_CHAT_ID')
     if token and chat_id:
-        url = f"https://api.telegram.org/bot{token}/sendMessage"
         try:
-            requests.post(url, json={'chat_id': chat_id, 'text': message}, timeout=10)
-        except Exception as e:
-            print(f"Telegram-virhe: {e}")
+            requests.post(f"https://api.telegram.org/bot{token}/sendMessage", 
+                          json={'chat_id': chat_id, 'text': msg}, timeout=10)
+        except:
+            print("Telegram fail")
 
-def get_fmi_data():
+def get_fmi():
     url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::observations::weather::latest::multipointcoverage&fmisid=101000&parameters=ws_10min,wg_10min,wd_10min"
-    response = requests.get(url, timeout=15)
-    if response.status_code != 200:
-        raise Exception(f"FMI haku epäonnistui: {response.status_code}")
-    
-    root = ET.fromstring(response.content)
-    # Etsitään arvot XML:stä huolellisemmin
-    for element in root.iter():
-        if element.tag.endswith('doubleOrNilReasonTupleList'):
-            values = element.text.strip().split()
-            if len(values) >= 3:
-                return values[-3], values[-2], values[-1]
-    return "N/A", "N/A", "N/A"
+    res = requests.get(url, timeout=15)
+    # TÄSSÄ OLI VIRHE: Jos palautettiin res eikä res.text, tuli se <Response [200]>
+    root = ET.fromstring(res.text)
+    for elem in root.iter():
+        if elem.tag.endswith('doubleOrNilReasonTupleList'):
+            raw_data = elem.text.strip().split()
+            if len(raw_data) >= 3:
+                return raw_data[-3], raw_data[-2], raw_data[-1]
+    return "0.0", "0.0", "0.0"
 
-def get_windguru_data():
+def get_wg():
     url = "https://www.windguru.cz/int/iapi.php?q=station_data_current&id_station=1336"
-    response = requests.get(url, timeout=15)
-    if response.status_code != 200:
-        raise Exception(f"Windguru haku epäonnistui: {response.status_code}")
-    data = response.json()
-    return str(data.get('wind_avg', 'N/A')), str(data.get('wind_max', 'N/A')), str(data.get('wind_direction', 'N/A'))
+    res = requests.get(url, timeout=15)
+    d = res.json()
+    return str(d.get('wind_avg', 0)), str(d.get('wind_max', 0)), str(d.get('wind_direction', 0))
 
 def main():
+    print("Aloitetaan...")
     try:
-        # 3. Yhteys Sheetiin
-        creds_json = os.environ.get('GCP_SERVICE_ACCOUNT_KEY')
-        if not creds_json:
-            raise ValueError("GCP_SERVICE_ACCOUNT_KEY puuttuu!")
-
-        scopes = [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive"
-        ]
+        # 1. Creds
+        key_json = os.environ.get('GCP_SERVICE_ACCOUNT_KEY')
+        if not key_json:
+            raise Exception("Key missing")
         
-        with open('temp_creds.json', 'w') as f:
-            f.write(creds_json)
-        
-        creds = Credentials.from_service_account_file('temp_creds.json', scopes=scopes)
+        scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+        creds = Credentials.from_service_account_info(json.loads(key_json), scopes=scopes)
         client = gspread.authorize(creds)
+        
+        # 2. Sheet
         sheet = client.open("Laru_Oracle_Data").get_worksheet(0)
         
-        # 4. Aika
-        current_time = datetime.now(timezone.utc) + timedelta(hours=2)
-        current_hour_prefix = current_time.strftime("%Y-%m-%d %H")
-
-        # 5. Tuplatarkistus
-        all_rows = sheet.get_all_values()
-        if all_rows:
-            last_row = all_rows[-1]
-            if last_row[0].startswith(current_hour_prefix):
-                print(f"Tunti {current_hour_prefix} jo hoidettu.")
-                return
-
-        # 6. DATAN HAKU (Tässä tapahtui se Response 200 sekoilu)
-        fmi_ws, fmi_wg, fmi_wd = get_fmi_data()
-        wg_ws, wg_wg, wg_wd = get_windguru_data()
+        # 3. Time & Dupe check
+        now = datetime.now(timezone.utc) + timedelta(hours=2)
+        hour_tag = now.strftime("%Y-%m-%d %H")
         
-        row = [
-            current_time.strftime("%Y-%m-%d %H:%M"),
-            fmi_ws, fmi_wg, fmi_wd,
-            wg_ws, wg_wg, wg_wd
-        ]
+        last_val = sheet.col_values(1)[-1] if sheet.col_values(1) else ""
+        if last_val.startswith(hour_tag):
+            print(f"Tunti {hour_tag} jo tehty.")
+            return
+
+        # 4. Data
+        f_ws, f_wg, f_wd = get_fmi()
+        w_ws, w_wg, w_wd = get_wg()
         
-        # 7. TALLENNUS
+        row = [now.strftime("%Y-%m-%d %H:%M"), f_ws, f_wg, f_wd, w_ws, w_wg, w_wd]
+        
+        # 5. Save
         sheet.append_row(row)
-        success_msg = f"✅ Data tallennettu: {current_time.strftime('%H:%M')} (FMI: {fmi_ws} m/s)"
-        print(success_msg)
-        send_telegram_message(success_msg)
+        msg = f"✅ Laru: {now.strftime('%H:%M')} | FMI: {f_ws}m/s | WG: {w_ws}m/s"
+        print(msg)
+        send_tg(msg)
 
     except Exception as e:
-        # TÄMÄ kertoo nyt tarkemmin mikä meni vikaan
-        error_msg = f"❌ Laru-Oracle VIRHE: {str(e)}"
-        print(error_msg)
-        send_telegram_message(error_msg)
-    finally:
-        if os.path.exists('temp_creds.json'):
-            os.remove('temp_creds.json')
+        err = f"❌ Virhe: {str(e)}"
+        print(err)
+        send_tg(err)
 
 if __name__ == "__main__":
     main()
