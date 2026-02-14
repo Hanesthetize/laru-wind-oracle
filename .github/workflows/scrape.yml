@@ -2,7 +2,7 @@ name: Wind Oracle Scraper
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Ajaa kerran tunnissa (tasatunnein)
+    - cron: '*/20 * * * *'  # Ajaa kerran tunnissa (tasatunnein)
   workflow_dispatch:      # Mahdollistaa napin painamisen käsin testiksi
 
 jobs:
