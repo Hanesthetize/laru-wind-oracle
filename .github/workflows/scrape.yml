@@ -2,8 +2,8 @@ name: Wind Oracle Scraper
 
 on:
   schedule:
-    - cron: '*/20 * * * *'  # Ajaa kerran tunnissa (tasatunnein)
-  workflow_dispatch:      # Mahdollistaa napin painamisen käsin testiksi
+    - cron: '*/20 * * * *'  # Ajetaan 20 minuutin välein
+  workflow_dispatch:      # Mahdollistaa napin, jolla voit testata heti
 
 jobs:
   build:
@@ -15,13 +15,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.x'
 
       - name: Install dependencies
-        run: |
-          pip install pandas requests gspread google-auth fmiopendata numpy
+        run: pip install requests gspread google-auth pandas numpy fmiopendata-python
 
-      - name: Run scraper
+      - name: Run Scraper
+        run: python scrape.py
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python oracle.py
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
