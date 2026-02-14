@@ -58,15 +58,13 @@ def main():
         current_hour_prefix = current_time.strftime("%Y-%m-%d %H")
 
         # 5. Tuplatarkistus
-        #all_rows = sheet.get_all_values()
-        #if all_rows:
-        #   last_row = all_rows[-1]
-        #    if last_row[0].startswith(current_hour_prefix):
+        all_rows = sheet.get_all_values()
+        if all_rows:
+            last_row = all_rows[-1]
+            if last_row[0].startswith(current_hour_prefix):
                 msg = f"ℹ️ Tunti {current_hour_prefix} on jo tallennettu. Ei uusia merkintöjä."
                 print(msg)
-                # Voit poistaa tämän kommentin jos haluat viestin myös skippauksesta:
-                # send_telegram_message(msg)
-         #       return
+                return
 
         # 6. DATAN HAKU
         fmi_ws, fmi_wg, fmi_wd = get_fmi_data()
