@@ -19,7 +19,7 @@ def main():
         scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds = Credentials.from_service_account_info(json.loads(key_json), scopes=scopes)
         client = gspread.authorize(creds)
-        sheet = client.open("Laru_Oracle_Data").get_worksheet(0)
+        sheet = client.open("Laru_Tuuli_Data").get_worksheet(0)
         print("2. Google-yhteys OK")
 
         # 2. Windguru haku (tämä on yleensä helpoin)
