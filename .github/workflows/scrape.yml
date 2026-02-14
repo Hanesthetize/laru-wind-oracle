@@ -21,7 +21,7 @@ jobs:
         run: pip install requests gspread google-auth
 
       - name: Run Scraper
-        run: python scrape.py
+        run: python oracle.py
         env:
           GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
