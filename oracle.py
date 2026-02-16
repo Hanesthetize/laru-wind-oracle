@@ -57,9 +57,10 @@ def paivita_oraakkeli():
         headers = {'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.windguru.cz/station/47'}
         wg_res = requests.get(wg_url, headers=headers, timeout=10).json()
         if 'wind_avg' in wg_res:
-            l_ws = float(wg_res['wind_avg'])
+            # Muunnetaan solmut metreiksi sekunnissa (kts -> m/s)
+            l_ws = round(float(wg_res['wind_avg']) * 0.51444, 1)
             l_wd = float(wg_res['wind_direction'])
-
+            
         # 5. TALLENNUS
         now = datetime.now(timezone.utc) + timedelta(hours=2)
         now_str = now.strftime("%Y-%m-%d %H:%M")
