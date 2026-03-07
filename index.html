@@ -13,6 +13,7 @@
         .tag { padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; }
         .bad { background: #bdc3c7; } .doable { background: #f1c40f; color: black; } 
         .good { background: #2ecc71; } .hard { background: #e67e22; }
+        #arrow-container { display: flex; justify-content: space-between; padding: 0 45px; margin-top: -10px; font-size: 1.2em; }
     </style>
 </head>
 <body>
@@ -29,27 +30,53 @@
             <span class="tag hard">10+ m/s</span>
         </div>
 
-        <canvas id="windChart"></canvas>
+        <div style="position: relative; height: 350px;">
+            <canvas id="windChart"></canvas>
+        </div>
         
-        <div style="margin-top: 15px; font-size: 0.8em; color: #777; line-height: 1.4;">
-            <strong>Vinkki:</strong> Timantin muotoinen piste 🔶 = Optimi suunta (170°-250°).<br>
-            Harmaa katkoviiva = Harmaja (avomeri). Sininen alue = Larun ranta.
+        <div id="arrow-row" style="display: flex; overflow: hidden; margin-left: 35px; margin-right: 5px; padding-top: 5px; border-top: 1px solid #eee;"></div>
+
+        <div style="margin-top: 25px; font-size: 0.8em; color: #777; line-height: 1.4; border-top: 1px dashed #ccc; padding-top: 10px;">
+            <strong>Symbolit:</strong> 🔶 = Optimi surffisuunta (170°-250°). <br>
+            <strong>Nuolet:</strong> Osoittavat tuulen suunnan (esim. ⬆️ = etelätuuli, tuulee ylöspäin).
         </div>
     </div>
 
     <script>
+        function getArrowEmoji(deg) {
+            // FMI suunta on mistä tuulee. Emoji osoittaa minne tuulee.
+            // Lisätään 180 astetta jotta nuoli osoittaa tuulen liikkeen suuntaan.
+            const arrows = ['⬇️', '↙️', '⬅️', '↖️', '⬆️', '↗️', '➡️', '↘️'];
+            const idx = Math.round(deg / 45) % 8;
+            return arrows[idx];
+        }
+
         async function drawChart() {
             try {
                 const response = await fetch('ennuste.json');
                 const data = await response.json();
 
-                const labels = data.map(d => d.aika_str);
-                const laruData = data.map(d => d.laru_ms);
-                const harData = data.map(d => d.har_ms);
-                const directions = data.map(d => d.har_dir);
+                // Otetaan vain joka toinen piste jos dataa on liikaa nuolille
+                const chartData = data.slice(0, 24); 
+
+                const labels = chartData.map(d => d.aika_str.split('klo')[1]); // Vain kellonaika akselille
+                const laruData = chartData.map(d => d.laru_ms);
+                const harData = chartData.map(d => d.har_ms);
+                const directions = chartData.map(d => d.har_dir);
+
+                // Luodaan nuolirivi
+                const arrowRow = document.getElementById('arrow-row');
+                chartData.forEach(d => {
+                    const span = document.createElement('span');
+                    span.style.flex = "1";
+                    span.style.textAlign = "center";
+                    span.style.fontSize = "0.9em";
+                    span.title = d.har_dir + "°";
+                    span.innerHTML = getArrowEmoji(d.har_dir);
+                    arrowRow.appendChild(span);
+                });
 
                 const ctx = document.getElementById('windChart').getContext('2d');
-                
                 new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -59,17 +86,16 @@
                                 label: 'Laru (m/s)',
                                 data: laruData,
                                 borderColor: '#2980b9',
-                                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                                backgroundColor: 'rgba(52, 152, 219, 0.15)',
                                 fill: true,
                                 tension: 0.4,
                                 borderWidth: 3,
                                 pointRadius: 5,
-                                pointHitRadius: 10,
+                                pointBackgroundColor: directions.map(d => (d >= 170 && d <= 250) ? '#e67e22' : '#2980b9'),
                                 pointStyle: directions.map(d => (d >= 170 && d <= 250) ? 'rectRot' : 'circle'),
-                                pointBackgroundColor: directions.map(d => (d >= 170 && d <= 250) ? '#e67e22' : '#2980b9')
                             },
                             {
-                                label: 'Harmaja (m/s)',
+                                label: 'Harmaja',
                                 data: harData,
                                 borderColor: '#ccc',
                                 borderDash: [5, 5],
@@ -80,25 +106,17 @@
                         ]
                     },
                     options: {
-                        responsive: true,
+                        maintainAspectRatio: false,
                         plugins: {
-                            tooltip: {
-                                callbacks: {
-                                    afterLabel: function(context) {
-                                        const i = context.dataIndex;
-                                        return `Suunta: ${directions[i]}°`;
-                                    }
-                                }
-                            }
+                            legend: { display: false }
                         },
                         scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'm/s' } }
+                            y: { beginAtZero: true, max: Math.max(...harData) + 2 }
                         }
                     }
                 });
             } catch (e) {
-                console.error("Datan lataus epäonnistui:", e);
-                document.body.innerHTML += "<p style='text-align:center; color:red;'>Hups! Ennustetta ei saatu ladattua. Tarkista että ennuste.json on olemassa.</p>";
+                console.error(e);
             }
         }
         drawChart();
