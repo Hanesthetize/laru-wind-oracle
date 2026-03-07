@@ -2,65 +2,73 @@ import pandas as pd
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime
+import json
 
 # 1. ORAAKKELIN KERTOIMET (Laskettu datasta)
+# Nämä ovat ne "pyhät luvut", joita hienosäädämme myöhemmin
 KERTOIMET = {
-    0: 0.94,   # N
-    45: 0.97,  # NE
-    90: 0.50,  # E
-    135: 0.66, # SE
-    180: 0.58, # S
-    225: 0.63, # SW
-    270: 0.50, # W
-    315: 1.03, # NW
-    360: 0.94  # N (toinen pää)
+    0: 0.94, 45: 0.97, 90: 0.50, 135: 0.66, 
+    180: 0.58, 225: 0.63, 270: 0.50, 315: 1.03
 }
 
 def hae_fmi_ennuste():
-    print("Haetaan tuorein ennuste Harmajalle...")
-    # FMI Ennustemalli (Harmaja FMISID: 100996)
-    url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::forecast::harmonie::surface::point::multipointcoverage&fmisid=100996&parameters=WindSpeedMS,WindDirection"
+    # Haetaan Harmajan ennuste (WindSpeedMS, WindDirection, WindGust)
+    url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::forecast::harmonie::surface::point::multipointcoverage&fmisid=100996&parameters=WindSpeedMS,WindDirection,WindGust"
     
-    r = requests.get(url)
-    if r.status_code != 200: return None
+    try:
+        r = requests.get(url, timeout=15)
+        r.raise_for_status()
+        root = ET.fromstring(r.content)
+        
+        data_text = ""
+        for elem in root.iter():
+            if 'doubleOrNilReasonTupleList' in elem.tag:
+                data_text = elem.text
+                break
+        
+        if not data_text: return None
 
-    root = ET.fromstring(r.content)
-    data_text = ""
-    for elem in root.iter():
-        if 'doubleOrNilReasonTupleList' in elem.tag:
-            data_text = elem.text
-            break
-    
-    if not data_text: return None
-
-    lines = data_text.strip().split('\n')
-    rows = [line.split() for line in lines]
-    
-    df = pd.DataFrame(rows, columns=['har_ms', 'har_dir'])
-    df['har_ms'] = pd.to_numeric(df['har_ms'])
-    df['har_dir'] = pd.to_numeric(df['har_dir'])
-    
-    # Luodaan aikaleimat (ennuste alkaa tästä hetkestä tunnin välein)
-    df['aika'] = pd.date_range(start=datetime.now(), periods=len(df), freq='H')
-    return df
+        lines = data_text.strip().split('\n')
+        rows = [line.split() for line in lines]
+        
+        df = pd.DataFrame(rows, columns=['har_ms', 'har_dir', 'har_gust'])
+        df = df.apply(pd.to_numeric)
+        
+        # Luodaan aikaleimat tunnin välein tästä hetkestä
+        df['aika'] = pd.date_range(start=datetime.now().replace(minute=0, second=0, microsecond=0), 
+                                   periods=len(df), freq='h')
+        return df
+    except Exception as e:
+        print(f"Virhe ennusteen haussa: {e}")
+        return None
 
 def laske_laru_ennuste(df):
     def hae_kerroin(suunta):
-        # Etsitään lähin 45 asteen lohko
         lohko = round(suunta / 45) * 45
-        if lohko == 360: lohko = 0
-        return KERTOIMET.get(lohko, 0.6) # Oletus 0.6 jos ei löydy
+        if lohko >= 360: lohko = 0
+        return KERTOIMET.get(lohko, 0.6)
 
     df['kerroin'] = df['har_dir'].apply(hae_kerroin)
+    
+    # Lasketaan Larun keskituuli ja pidetään puuska mukana (tässä voisi olla oma kerroin puuskalle!)
     df['laru_ms'] = (df['har_ms'] * df['kerroin']).round(1)
-    return df[['aika', 'har_ms', 'har_dir', 'laru_ms']]
+    df['laru_gust'] = (df['har_gust'] * df['kerroin']).round(1) # Alustava arvio puuskalle
+    
+    # Muutetaan aika tekstiksi JSONia varten
+    df['aika_str'] = df['aika'].dt.strftime('%d.%m. klo %H:%M')
+    
+    return df
 
-# AJETAAN ENNUSTE
-ennuste_data = hae_fmi_ennuste()
-if ennuste_data is not None:
-    lopputulos = laske_laru_ennuste(ennuste_data)
-    print("\n--- LÄHIAIJOJEN LARU-ENNUSTE ---")
-    # Tulostetaan seuraavat 12 tuntia
-    print(lopputulos.head(12).to_string(index=False))
-else:
-    print("Ennustetta ei saatu haettua.")
+# AJO
+df_ennuste = hae_fmi_ennuste()
+if df_ennuste is not None:
+    ennuste = laske_laru_ennuste(df_ennuste)
+    
+    # Tallennetaan JSON-tiedostona webbisivua varten
+    tulos_json = ennuste[['aika_str', 'har_ms', 'laru_ms', 'har_dir', 'laru_gust']].head(48).to_dict(orient='records')
+    
+    with open('ennuste.json', 'w') as f:
+        json.dump(tulos_json, f, indent=4)
+    
+    print("Ennuste päivitetty tiedostoon ennuste.json")
+    print(ennuste[['aika_str', 'har_ms', 'laru_ms', 'har_dir']].head(10))
