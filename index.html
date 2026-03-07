@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laru Wind Oracle</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f4f7f6; }
+        .container { background: white; padding: 20px; border-radius: 10px; shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; }
+        .info { font-size: 0.9em; color: #666; text-align: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌬️ Laru Wind Oracle</h1>
+        <p class="info">Ennuste perustuu Harmajan dataan, joka on korjattu Larun rannan historiatietojen perusteella.</p>
+        <canvas id="windChart"></canvas>
+    </div>
+
+    <script>
+        async function drawChart() {
+            // Ladataan data JSON-tiedostosta
+            const response = await fetch('ennuste.json');
+            const data = await response.json();
+
+            const labels = data.map(d => d.aika_str);
+            const harmajaData = data.map(d => d.har_ms);
+            const laruData = data.map(d => d.laru_ms);
+
+            const ctx = document.getElementById('windChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Laru (Ennuste m/s)',
+                            data: laruData,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Harmaja (FMI m/s)',
+                            data: harmajaData,
+                            borderColor: '#bdc3c7',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Tuulen nopeus m/s' } }
+                    }
+                }
+            });
+        }
+        drawChart();
+    </script>
+</body>
+</html>
