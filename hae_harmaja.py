@@ -2,22 +2,42 @@ import requests
 import pandas as pd
 import xml.etree.ElementTree as ET
 
-def lataa_vuosi_harmaja(vuosi):
-    print(f"Ladataan Harmajan data vuodelta {vuosi}...")
-    # Haetaan dataa 2 viikon pätkissä, koska FMI rajoittaa kertahakua
-    pätkät = [("01-01", "01-14"), ("01-15", "01-31")] # Tähän voi lisätä koko vuoden
-    kaikki_data = []
-
-    for alku, loppu in pätkät:
-        alku_iso = f"{vuosi}-{alku}T00:00:00Z"
-        loppu_iso = f"{vuosi}-{loppu}T23:50:00Z"
-        url = f"https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::observations::weather::multipointcoverage&fmisid=100996&starttime={alku_iso}&endtime={loppu_iso}&parameters=ws_10min,wd_10min"
-        
-        r = requests.get(url)
-        if r.status_code == 200:
-            # Tässä kohtaa parsimme XML:n ja lisäämme listaan
-            print(f"Pätkä {alku} - {loppu} ladattu.")
-            # (Lisää parsimislogiikka tähän)
+def hae_ja_tallenna(alku, loppu, tiedosto):
+    print(f"Haetaan Harmaja: {alku} - {loppu}...")
+    url = (
+        "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0"
+        "&request=getFeature"
+        "&storedquery_id=fmi::observations::weather::multipointcoverage"
+        "&fmisid=100996"
+        f"&starttime={alku}T00:00:00Z"
+        f"&endtime={loppu}T23:50:00Z"
+        "&parameters=ws_10min,wd_10min"
+    )
     
-    # Lopuksi tallennus
-    # pd.DataFrame(kaikki_data).to_csv('harmaja_data.csv', index=False)
+    r = requests.get(url)
+    if r.status_code != 200:
+        print(f"Virhe: {r.status_code}")
+        return
+
+    root = ET.fromstring(r.content)
+    data_text = ""
+    # Etsitään FMI:n XML-rakenteesta ne varsinaiset numerot
+    for elem in root.iter('{http://www.opengis.net/gml/3.2}doubleOrNilReasonTupleList'):
+        data_text = elem.text
+    
+    if data_text:
+        lines = data_text.strip().split('\n')
+        rows = [line.split() for line in lines]
+        df = pd.DataFrame(rows, columns=['har_ms', 'har_dir'])
+        
+        # Luodaan aikaleimat (tammikuun 2024 alku on 4464 kpl 10min pätkiä koko kuukaudelle)
+        # Käytetään dynaamista pituutta, ettei tule virhettä
+        df['aika'] = pd.date_range(start=alku, periods=len(df), freq='10min')
+        
+        df.to_csv(tiedosto, index=False)
+        print(f"Tallennettu: {tiedosto} ({len(df)} riviä)")
+    else:
+        print("Dataa ei löytynyt XML-vastauksesta.")
+
+# Haetaan tammikuu 2024 testiksi
+hae_ja_tallenna("2024-01-01", "2024-01-31", "harmaja_history.csv")
