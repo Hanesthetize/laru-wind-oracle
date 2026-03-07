@@ -35,9 +35,18 @@ def hae_harmaja_fmi(alku, loppu):
 
 # 1. Ladataan Laru-data
 try:
-    df_laru = pd.read_csv('laru_final_10min.csv', names=['aika', 'laru_ms', 'suunta'])
-    df_laru['aika'] = pd.to_datetime(df_laru['aika']).dt.tz_localize(None).dt.floor('10min')
-    print(f"Laru-dataa ladattu: {len(df_laru)} riviä.")
+    # Luetaan data raakana tekstinä ensin, koska välilyönti puuttuu
+    df_laru = pd.read_csv('laru_final_10min.csv', names=['aika', 'laru_ms', 'suunta'], dtype={'aika': str})
+    
+    # KORJAUS: Lisätään välilyönti 10. merkin jälkeen (esim. "2019-01-0100:08" -> "2019-01-01 00:08")
+    df_laru['aika'] = df_laru['aika'].str[:10] + " " + df_laru['aika'].str[10:]
+    
+    # Nyt muunnetaan se ajaksi
+    df_laru['aika'] = pd.to_datetime(df_laru['aika'], errors='coerce')
+    df_laru = df_laru.dropna(subset=['aika']) # Poistetaan mahdolliset virheelliset rivit
+    df_laru['aika'] = df_laru['aika'].dt.tz_localize(None).dt.floor('10min')
+    
+    print(f"Laru-dataa ladattu ja korjattu: {len(df_laru)} riviä.")
 
     # 2. Haetaan Harmaja-data vertailuksi (vuoden 2024 alku testiksi)
     df_harmaja = hae_harmaja_fmi("2024-01-01", "2024-01-14")
