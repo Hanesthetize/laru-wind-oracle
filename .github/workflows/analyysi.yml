@@ -17,7 +17,7 @@ jobs:
           # POISTETTIIN: cache-asetukset, jotka aiheuttivat herjan
 
       - name: Install dependencies
-        run: pip install pandas numpy
+        run: pip install pandas numpy requests
 
       - name: Run analysis script
         run: python analysoi_laru.py
