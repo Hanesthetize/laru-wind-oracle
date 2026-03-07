@@ -1,0 +1,33 @@
+name: Nouda Harmaja Data
+
+on:
+  workflow_dispatch: # Voit ajaa tämän napista Actions-välilehdeltä
+
+jobs:
+  fetch_data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Tarvitaan, jotta robotti voi tallentaa tiedoston repoon
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install pandas requests
+
+      - name: Run Harmaja Scraper
+        run: python hae_harmaja.py
+
+      - name: Save Harmaja Data to Repo
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add harmaja_history.csv
+          git commit -m "Päivitetty Harmaja-data" || echo "Ei muutoksia tallennettavaksi"
+          git push
