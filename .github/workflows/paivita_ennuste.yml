@@ -1,0 +1,29 @@
+name: Paivita Laru Ennuste
+
+on:
+  schedule:
+    - cron: '0 */3 * * *' # Ajaa 3 tunnin välein
+  workflow_dispatch: # Mahdollistaa manuaalisen ajon
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: pip install pandas requests
+      - name: Run prediction
+        run: python ennusta_laru.py
+      - name: Commit and Push
+        run: |
+          git config --global user.name "Laru Oracle"
+          git config --global user.email "oracle@laru.fi"
+          git add ennuste.json
+          git commit -m "Update prediction data" || echo "No changes"
+          git push
