@@ -3,66 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laru Wind Oracle</title>
+    <title>Laru Wind Oracle 🌬️</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f4f7f6; }
-        .container { background: white; padding: 20px; border-radius: 10px; shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; text-align: center; }
-        .info { font-size: 0.9em; color: #666; text-align: center; margin-bottom: 20px; }
+        body { font-family: -apple-system, sans-serif; max-width: 900px; margin: 0 auto; padding: 15px; background: #eaeff2; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        h1 { color: #1a2a3a; text-align: center; margin-bottom: 5px; }
+        .status-box { display: flex; justify-content: space-around; margin: 20px 0; text-align: center; font-size: 0.8em; }
+        .legend-item { padding: 5px 10px; border-radius: 5px; color: white; font-weight: bold; }
+        .best { background: #2ecc71; } .good { background: #f1c40f; color: #000; } .bad { background: #bdc3c7; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🌬️ Laru Wind Oracle</h1>
-        <p class="info">Ennuste perustuu Harmajan dataan, joka on korjattu Larun rannan historiatietojen perusteella.</p>
+        <div style="text-align: center; color: #666; font-size: 0.9em; margin-bottom: 20px;">
+            Ennustettu tuuli Larun rannassa (m/s)
+        </div>
+
+        <div class="status-box">
+            <span class="legend-item bad">< 5 m/s (Huono)</span>
+            <span class="legend-item good">5-7 m/s (Doable)</span>
+            <span class="legend-item best">7-10 m/s (Hyvä)</span>
+            <span class="legend-item" style="background:#e67e22">10+ m/s (Kova)</span>
+        </div>
+
         <canvas id="windChart"></canvas>
+        
+        <p style="font-size: 0.8em; color: #999; margin-top: 20px; text-align: center;">
+            Suunta-indikaattori: ⬇️ = Pohjoistuuli, ⬆️ = Etelätuuli. <br>
+            Surffisuunnat (180°-240°) korostuvat parhaiten.
+        </p>
     </div>
 
     <script>
         async function drawChart() {
-            // Ladataan data JSON-tiedostosta
             const response = await fetch('ennuste.json');
             const data = await response.json();
 
             const labels = data.map(d => d.aika_str);
-            const harmajaData = data.map(d => d.har_ms);
+            const harData = data.map(d => d.har_ms);
             const laruData = data.map(d => d.laru_ms);
+            const directions = data.map(d => d.har_dir);
+
+            // Funktio nuolen suunnalle
+            const getArrow = (deg) => {
+                const arrows = ['⬇️', '↙️', '⬅️', '↖️', '⬆️', '↗️', '➡️', '↘️'];
+                return arrows[Math.round(deg / 45) % 8];
+            };
 
             const ctx = document.getElementById('windChart').getContext('2d');
-            new Chart(ctx, {
+            
+            // Luodaan taustavärit (gradientti tai vyöhykkeet)
+            const chart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [
-                        {
-                            label: 'Laru (Ennuste m/s)',
-                            data: laruData,
-                            borderColor: '#3498db',
-                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                            fill: true,
-                            tension: 0.3,
-                            borderWidth: 3
-                        },
-                        {
-                            label: 'Harmaja (FMI m/s)',
-                            data: harmajaData,
-                            borderColor: '#bdc3c7',
-                            borderDash: [5, 5],
-                            fill: false,
-                            tension: 0.3
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Tuulen nopeus m/s' } }
-                    }
-                }
-            });
-        }
-        drawChart();
-    </script>
-</body>
-</html>
+                    datasets: [{
+                        label: 'Laru Ennuste (m/s)',
+                        data: laruData,
+                        borderColor: '#2980b9',
+                        backgroundColor: (context) => {
+                            const val = context.raw;
+                            if (val >= 10) return 'rgba(230, 126, 34, 0.2)';
+                            if (val >=
