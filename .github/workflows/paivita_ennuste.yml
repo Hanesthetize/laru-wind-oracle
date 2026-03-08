@@ -29,7 +29,7 @@ jobs:
           git config --global user.name "Laru Oracle"
           git config --global user.email "oracle@laru.fi"
           
-          # TÄMÄ KORJAA REJECTED-VIRHEEN:
+          # Haetaan selainmuutokset ensin alta pois (korjaa rejected-virheen)
           git pull origin main --rebase 
 
           git add ennuste.json
