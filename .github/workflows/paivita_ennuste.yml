@@ -20,19 +20,20 @@ jobs:
         run: pip install pandas requests
       - name: Run prediction
         run: python ennusta_laru.py
-     - name: Commit and Push
+    - name: Commit and Push
         run: |
           git config --global user.name "Laru Oracle"
           git config --global user.email "oracle@laru.fi"
           
-          # Haetaan uusimmat muutokset alta, jotta ei tule "rejected" virhettä
-          git pull origin main --rebase
+          # Pakotetaan päivitys: haetaan muutokset ja lätkäistään omat päälle
+          git fetch origin main
+          git reset --soft origin/main
           
           git add ennuste.json
           
-          # Yritetään committia, jos tiedosto on muuttunut
+          # Commataan vain jos on oikeasti muuttunutta dataa
           if git diff --staged --quiet; then
-            echo "Ei muutoksia tiedostossa, skipataan commit."
+            echo "Ei muutoksia datassa."
           else
             git commit -m "Update prediction data $(date)"
             git push origin main
