@@ -2,8 +2,8 @@ name: Paivita Laru Ennuste
 
 on:
   schedule:
-    - cron: '0 */3 * * *' # Ajaa 3 tunnin välein
-  workflow_dispatch: # Mahdollistaa manuaalisen ajon
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,9 +11,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Hakee koko historian, jotta push onnistuu paremmin
+      - uses: actions/checkout@v4 # Palataan puhtaaseen eiliseen tapaan
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -21,7 +19,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install pandas requests
+        run: pip install requests # Poistettu pandas, jos et tarvitse sitä
 
       - name: Run prediction
         run: python ennusta_laru.py
@@ -31,15 +29,15 @@ jobs:
           git config --global user.name "Laru Oracle"
           git config --global user.email "oracle@laru.fi"
           
-          # Pakotetaan paikallinen tila vastaamaan pilveä ilman kikkailua
           git add ennuste.json
           
-          # Tarkistetaan onko tiedosto oikeasti muuttunut
+          # TÄMÄ ON RATKAISU:
+          # Jos olet muokannut koodia selaimessa, tämä hakee ne ensin alta pois
+          git pull origin main --rebase 
+
           if git diff --staged --quiet; then
-            echo "Ei muutoksia datassa."
+            echo "Ei muutoksia."
           else
             git commit -m "Update prediction data $(date)"
-            # Käytetään rebasea, jotta mahdolliset selainmuutokset yhdistetään kiltisti
-            git pull --rebase origin main
             git push origin main
           fi
