@@ -1,4 +1,4 @@
-# VERSIO 2.1 - GUST & TEMP - TESTI
+# VERSIO 2.2 - GUST ONLY - PALAUTUS
 import requests
 import json
 import xml.etree.ElementTree as ET
@@ -15,8 +15,9 @@ def laske_laru_teho(har_ms, suunta, pvm_obj):
     return round(har_ms * base, 1)
 
 def paivita_ennuste():
-    print("🚀 Käynnistetään ennusteen päivitys V2.1...")
-    url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::forecast::harmonie::surface::point::multipointcoverage&fmisid=100996&parameters=WindSpeedMS,WindDirection,WindGust,t2m"
+    print("🚀 Käynnistetään ennusteen päivitys V2.2 (Puuskat mukana)...")
+    # Haetaan vain nopeus, suunta ja puuska (WindGust)
+    url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::forecast::harmonie::surface::point::multipointcoverage&fmisid=100996&parameters=WindSpeedMS,WindDirection,WindGust"
     
     try:
         r = requests.get(url, timeout=30)
@@ -35,12 +36,11 @@ def paivita_ennuste():
 
         for i, val in enumerate(values):
             parts = val.split()
-            if len(parts) < 4: continue
+            if len(parts) < 3: continue # Nyt odotetaan 3 arvoa (nopeus, suunta, puuska)
             
             har_ms = float(parts[0])
             har_dir = float(parts[1])
             gust_ms = float(parts[2])
-            temp = float(parts[3])
             
             ennuste_aika = nykyhetki + timedelta(hours=i)
             
@@ -49,13 +49,12 @@ def paivita_ennuste():
                 "har_ms": har_ms,
                 "laru_ms": laske_laru_teho(har_ms, har_dir, ennuste_aika),
                 "har_dir": har_dir,
-                "gust_ms": gust_ms,
-                "temp": temp
+                "gust_ms": gust_ms
             })
             
         with open('ennuste.json', 'w') as f:
             json.dump(ennusteet, f, indent=4)
-        print(f"✅ VALMIS: Päivitetty {len(ennusteet)} tuntia (sis. puuskat ja lämpö).")
+        print(f"✅ VALMIS: Päivitetty {len(ennusteet)} tuntia (sis. puuskat).")
 
     except Exception as e:
         print(f"❌ VIRHE: {e}")
