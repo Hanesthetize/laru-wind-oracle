@@ -16,21 +16,28 @@ def laske_laru_teho(har_ms, suunta, pvm_obj):
     return round(har_ms * base * mod, 1)
 
 def paivita_ennuste():
+    print("🚀 Haetaan ennuste FMI:ltä...")
     url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::forecast::harmonie::surface::point::multipointcoverage&fmisid=100996&parameters=WindSpeedMS,WindDirection"
+    
     try:
         r = requests.get(url, timeout=30)
         r.raise_for_status()
+        
         root = ET.fromstring(r.content)
         
-        # Joustava haku riippumatta nimiavaruudesta
-        data_node = next((e for e in root.iter() if e.tag.endswith('doubleOrNilReasonTupleList')), None)
+        # JOUSTAVA HAKU: Etsitään elementti, joka loppuu tähän nimeen (ignoraa nimiavaruudet)
+        data_node = None
+        for elem in root.iter():
+            if elem.tag.endswith('doubleOrNilReasonTupleList'):
+                data_node = elem
+                break
         
         if data_node is None or not data_node.text:
-            print("❌ Virhe: Dataa ei löytynyt.")
+            print("❌ Virhe: Datapistettä 'doubleOrNilReasonTupleList' ei löytynyt XML:stä.")
             return
 
         values = data_node.text.strip().split('\n')
-        print(f"✅ Löydetty {len(values)} tuntia.")
+        print(f"✅ Löydetty {len(values)} ennustetuntia.")
         
         ennusteet = []
         nykyhetki = datetime.now()
@@ -38,23 +45,26 @@ def paivita_ennuste():
         for i, val in enumerate(values):
             parts = val.split()
             if len(parts) < 2: continue
-            har_ms, har_dir = float(parts[0]), float(parts[1])
+            
+            har_ms = float(parts[0])
+            har_dir = float(parts[1])
             ennuste_aika = nykyhetki + timedelta(hours=i)
+            laru_ms = laske_laru_teho(har_ms, har_dir, ennuste_aika)
             
             ennusteet.append({
                 "aika_str": ennuste_aika.strftime("%d.%m. klo %H:%M"),
                 "har_ms": har_ms,
-                "laru_ms": laske_laru_teho(har_ms, har_dir, ennuste_aika),
+                "laru_ms": laru_ms,
                 "har_dir": har_dir,
-                "laru_gust": round(har_ms * 1.3, 1)
+                "laru_gust": round(laru_ms * 1.3, 1)
             })
             
         with open('ennuste.json', 'w') as f:
             json.dump(ennusteet, f, indent=4)
-        print("💾 Tiedosto ennuste.json päivitetty!")
+        print(f"💾 Tiedosto ennuste.json päivitetty onnistuneesti!")
 
     except Exception as e:
-        print(f"❌ Virhe: {e}")
+        print(f"❌ Virhe prosessoinnissa: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
