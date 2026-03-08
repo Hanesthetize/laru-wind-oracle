@@ -17,24 +17,14 @@ def laske_laru_teho(har_ms, suunta, pvm_obj):
 
 def paivita_ennuste():
     print("🚀 Haetaan ennuste FMI:ltä...")
-    # Käytetään yksinkertaisempaa kyselyä, joka on varmempi
     url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::forecast::harmonie::surface::point::multipointcoverage&fmisid=100996&parameters=WindSpeedMS,WindDirection"
     
     try:
         r = requests.get(url, timeout=30)
         r.raise_for_status()
-        
-        # Etsitään tekstistä ne arvot ilman monimutkaista XML-puun selausta jos mahdollista
-        content = r.text
-        if "doubleOrNilReasonTupleList" not in content:
-            print("❌ Virhe: XML-vastaus ei sisällä odotettua datalistaa.")
-            print(f"Vastauksen alku: {content[:200]}")
-            return
-
-        # Parsitaan perinteisellä tavalla
         root = ET.fromstring(r.content)
         
-        # Etsitään kaikki doubleOrNilReasonTupleList elementit riippumatta nimiavaruudesta
+        # JOUSTAVA HAKU: Etsitään data-elementti riippumatta nimiavaruudesta
         data_node = None
         for elem in root.iter():
             if elem.tag.endswith('doubleOrNilReasonTupleList'):
@@ -42,7 +32,7 @@ def paivita_ennuste():
                 break
         
         if data_node is None or not data_node.text:
-            print("❌ Virhe: Data-elementti löytyi, mutta se on tyhjä.")
+            print("❌ Virhe: Data-elementtiä ei löytynyt tai se on tyhjä.")
             return
 
         values = data_node.text.strip().split('\n')
@@ -57,7 +47,6 @@ def paivita_ennuste():
             
             har_ms = float(parts[0])
             har_dir = float(parts[1])
-            
             ennuste_aika = aloitusaika + timedelta(hours=i)
             laru_ms = laske_laru_teho(har_ms, har_dir, ennuste_aika)
             
@@ -71,7 +60,7 @@ def paivita_ennuste():
             
         with open('ennuste.json', 'w') as f:
             json.dump(ennusteet, f, indent=4)
-        print(f"💾 Tiedosto ennuste.json päivitetty onnistuneesti!")
+        print(f"💾 Tiedosto ennuste.json päivitetty!")
 
     except Exception as e:
         print(f"❌ Virhe prosessoinnissa: {e}")
