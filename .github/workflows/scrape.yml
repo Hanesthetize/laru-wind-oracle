@@ -1,25 +1,43 @@
-name: Laru Wind Scraper
+name: Laru Wind Scraper & Oracle
 
 on:
   schedule:
-    - cron: '*/20 * * * *'  # Ajaa joka tunti, 5 minuuttia yli tasan
-  workflow_dispatch:      # Sallii myös manuaalisen käynnistyksen "Run workflow" -napista
+    - cron: '*/20 * * * *'  # Ajaa 20 minuutin välein
+  workflow_dispatch:        # Manuaalinen käynnistys
 
 jobs:
-  scrape:
+  scrape_and_predict:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
       - name: Install dependencies
         run: |
           pip install requests gspread google-auth fmiopendata numpy
-      - name: Run oracle
+
+      - name: Run Telegram Bot & Sheets Update
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python oracle.py
+
+      - name: Run Oracle Forecast (Web-sivu)
+        run: python ennusta_laru.py
+
+      - name: Run History Logger (CSV)
+        run: python log_toteuma.py
+
+      - name: Save History and Forecast
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add ennuste.json history.csv
+          # Commit vain jos tiedostot muuttuivat, jotta workflow ei kaadu virheeseen
+          git commit -m "Update wind data and history [skip ci]" || exit 0
+          git push
