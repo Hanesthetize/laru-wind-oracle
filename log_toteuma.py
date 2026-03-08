@@ -19,16 +19,25 @@ def hae_laru_actual():
     print("🌐 Haetaan Windguru (Laru Station 47) dataa...")
     try:
         wg_url = "https://www.windguru.cz/int/iapi.php?q=station_data_current&id_station=47"
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        res = requests.get(wg_url, headers=headers, timeout=15).json()
+        # Käytetään täsmälleen samoja headereita kuin toimivassa botissasi
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Referer': 'https://www.windguru.cz/station/47'
+        }
+        r = requests.get(wg_url, headers=headers, timeout=15)
+        res = r.json()
+        
         if 'wind_avg' in res:
             # Muunnetaan solmut (kts) -> m/s
             ws = round(float(res['wind_avg']) * 0.51444, 1)
             print(f"✅ Laru Actual OK: {ws} m/s")
             return ws
+        else:
+            print(f"⚠️ Windguru vastasi, mutta 'wind_avg' puuttui: {res}")
+            return None
     except Exception as e:
         print(f"⚠️ Windguru-virhe: {e}")
-    return None
+        return None
 
 def loggaa_kaikki():
     print("📡 Käynnistetään tiedonkeruu...")
