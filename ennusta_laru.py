@@ -8,7 +8,6 @@ import sys
 KK_BASE = {1: 0.68, 2: 0.66, 3: 0.57, 4: 0.61, 5: 0.59, 6: 0.63, 7: 0.63, 8: 0.58, 9: 0.60, 10: 0.65, 11: 0.69, 12: 0.64}
 
 def laske_laru_teho(har_ms, suunta, pvm_obj):
-    # Jos tuuli ei ole 180-240 astetta, teho putoaa puoleen
     if not (180 <= suunta <= 240):
         return round(har_ms * 0.50, 1)
     base = KK_BASE.get(pvm_obj.month, 0.63)
@@ -20,8 +19,8 @@ def paivita_ennuste():
         r = requests.get(url, timeout=30)
         r.raise_for_status()
         
-        # Joustava haku, joka löytää datan vaikka nimiavaruudet muuttuisivat
         root = ET.fromstring(r.content)
+        # Etsitään data riippumatta nimiavaruudesta
         data_node = next((e for e in root.iter() if e.tag.endswith('doubleOrNilReasonTupleList')), None)
         
         if data_node is None or not data_node.text:
