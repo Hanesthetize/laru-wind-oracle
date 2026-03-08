@@ -28,12 +28,13 @@ jobs:
         run: |
           git config --global user.name "Laru Oracle"
           git config --global user.email "oracle@laru.fi"
+          
           git add ennuste.json
           
-          # Pakotetaan commit ja push riippumatta selainmuutoksista
           if git diff --staged --quiet; then
             echo "Ei muutoksia."
           else
             git commit -m "Update prediction data $(date)"
+            # PAKOTETAAN PUSKU: ylikirjoittaa selainmuutokset ja korjaa rejected-virheen
             git push origin main --force
           fi
