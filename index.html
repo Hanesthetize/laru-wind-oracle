@@ -5,25 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laru Wind Oracle 🌬️</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
     <style>
         body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 10px; background: #eaeff2; }
         .container { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         h1 { color: #1a2a3a; text-align: center; margin-bottom: 5px; font-size: 1.5em; }
+        /* Lämpötila-tyyli */
+        #current-temp { text-align: center; font-size: 1.1em; font-weight: bold; color: #2980b9; margin-bottom: 10px; }
         .chart-wrapper { position: relative; height: 350px; width: 100%; margin-top: 10px; }
-        
-        /* Selite-alue */
-        .custom-legend { 
-            display: flex; 
-            justify-content: center; 
-            gap: 20px; 
-            margin-top: 15px; 
-            font-size: 0.8em; 
-            color: #444;
-            flex-wrap: wrap;
-        }
+        .custom-legend { display: flex; justify-content: center; gap: 20px; margin-top: 15px; font-size: 0.8em; color: #444; flex-wrap: wrap; }
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .line-sample { width: 30px; height: 0; border-top-width: 3px; border-top-style: solid; }
-
         #arrow-row { display: flex; margin-left: 32px; margin-right: 10px; border-top: 1px solid #eee; padding-top: 5px; }
         .arrow-item { flex: 1; text-align: center; font-size: 1em; cursor: help; }
         .date-label { font-size: 0.7em; color: #888; text-align: center; margin-top: 5px; font-weight: bold; }
@@ -32,7 +24,7 @@
 <body>
     <div class="container">
         <h1>🌬️ Laru Wind Oracle</h1>
-        <div style="text-align: center; font-size: 0.8em; color: #666;">Hanesthetize Local Surf Model</div>
+        <div id="current-temp">Haetaan tietoja...</div>
 
         <div class="chart-wrapper">
             <canvas id="windChart"></canvas>
@@ -42,23 +34,10 @@
         <div id="date-row" style="display: flex; margin-left: 32px; margin-right: 10px;"></div>
 
         <div class="custom-legend">
-            <div class="legend-item">
-                <div class="line-sample" style="border-top-color: #2980b9; border-top-width: 4px;"></div>
-                <strong>Laru Teho</strong>
-            </div>
-            <div class="legend-item">
-                <div class="line-sample" style="border-top-color: #2980b9; border-top-width: 1px;"></div>
-                <span>Laru Puuska</span>
-            </div>
-            <div class="legend-item">
-                <div class="line-sample" style="border-top-color: #ccc; border-top-width: 1px; border-top-style: dashed;"></div>
-                <span>Harmaja (ref)</span>
-            </div>
-        </div>
-
-        <div style="margin-top: 20px; font-size: 0.7em; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">
-            <span style="color: #2ecc71; font-weight: bold;">● Vihreä:</span> Optimi (>5 m/s & 170°-250°) | 
-            <strong>Nuoli:</strong> Minne tuuli puhaltaa
+            <div class="legend-item"><div class="line-sample" style="border-top-color: #2ecc71; border-top-width: 4px;"></div><strong>Optimi</strong></div>
+            <div class="legend-item"><div class="line-sample" style="border-top-color: #2980b9; border-top-width: 4px;"></div><strong>Laru Teho</strong></div>
+            <div class="legend-item"><div class="line-sample" style="border-top-color: #ccc; border-top-width: 1px; border-top-style: dashed;"></div><span>Harmaja</span></div>
+            <div class="legend-item"><div style="width: 15px; height: 15px; background: rgba(0,0,0,0.05); border-radius: 3px;"></div><span>Yö</span></div>
         </div>
     </div>
 
@@ -71,27 +50,42 @@
 
         async function drawChart() {
             try {
-                // Käytetään aikaleimaa, jotta JSON ei jää välimuistiin
                 const response = await fetch('ennuste.json?t=' + new Date().getTime());
                 const data = await response.json();
                 const displayData = data.slice(0, 30);
 
+                // Päivitetään lämpötila (otetaan ensimmäinen toteuma)
+                if(displayData[0].temp) {
+                    document.getElementById('current-temp').innerHTML = `Laru Nyt: ${displayData[0].temp}°C`;
+                }
+
                 const labels = displayData.map(d => d.aika_str.split('klo')[1].trim());
                 const dates = displayData.map(d => d.aika_str.split('klo')[0].trim());
-                const laruData = displayData.map(d => d.laru_ms);
-                const harData = displayData.map(d => d.har_ms);
-                const gustData = displayData.map(d => d.gust_ms || 0);
-                const directions = displayData.map(d => d.har_dir);
+                
+                // Luodaan yöalueet (Annotation-pluginille)
+                const annotations = {};
+                displayData.forEach((d, i) => {
+                    const tunti = parseInt(labels[i].split(':')[0]);
+                    // Jos tunti on välillä 19-07, merkataan se yöksi
+                    if (tunti >= 19 || tunti <= 6) {
+                        annotations['night' + i] = {
+                            type: 'box',
+                            xMin: i - 0.5,
+                            xMax: i + 0.5,
+                            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                            borderWidth: 0
+                        };
+                    }
+                });
 
                 const arrowRow = document.getElementById('arrow-row');
                 const dateRow = document.getElementById('date-row');
-                
                 let lastDate = "";
+                
                 displayData.forEach((d, i) => {
                     const aSpan = document.createElement('span');
                     aSpan.className = "arrow-item";
-                    aSpan.title = `${dates[i]} klo ${labels[i]}: ${directions[i]}°`;
-                    aSpan.innerHTML = getArrowEmoji(directions[i]);
+                    aSpan.innerHTML = getArrowEmoji(d.har_dir);
                     arrowRow.appendChild(aSpan);
 
                     const dSpan = document.createElement('span');
@@ -105,56 +99,41 @@
                 });
 
                 const ctx = document.getElementById('windChart').getContext('2d');
-                
                 new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
                             {
-                                label: 'Laru Puuska',
-                                data: gustData,
-                                borderColor: '#2980b9',
-                                borderWidth: 1,
-                                fill: false,
-                                pointRadius: 0,
-                                tension: 0.4,
-                                order: 2
-                            },
-                            {
                                 label: 'Laru Teho',
-                                data: laruData,
+                                data: displayData.map(d => d.laru_ms),
                                 fill: true,
                                 tension: 0.4,
                                 borderWidth: 5,
                                 pointRadius: 4,
-                                order: 1,
                                 pointBackgroundColor: displayData.map(d => 
                                     (d.laru_ms >= 5 && d.har_dir >= 170 && d.har_dir <= 250) ? '#2ecc71' : '#2980b9'
                                 ),
                                 segment: {
                                     borderColor: ctx => {
-                                        const i = ctx.p0DataIndex;
-                                        const d = displayData[i];
+                                        const d = displayData[ctx.p0DataIndex];
                                         return (d.laru_ms >= 5 && d.har_dir >= 170 && d.har_dir <= 250) ? '#2ecc71' : '#2980b9';
                                     },
                                     backgroundColor: ctx => {
-                                        const i = ctx.p0DataIndex;
-                                        const d = displayData[i];
-                                        return (d.laru_ms >= 5 && d.har_dir >= 170 && d.har_dir <= 250) ? 'rgba(46, 204, 113, 0.2)' : 'rgba(52, 152, 219, 0.1)';
+                                        const d = displayData[ctx.p0DataIndex];
+                                        return (d.laru_ms >= 5 && d.har_dir >= 170 && d.har_dir <= 250) ? 'rgba(46, 204, 113, 0.1)' : 'rgba(52, 152, 219, 0.05)';
                                     }
                                 }
                             },
                             {
                                 label: 'Harmaja',
-                                data: harData,
+                                data: displayData.map(d => d.har_ms),
                                 borderColor: '#ccc',
                                 borderDash: [5, 5],
                                 fill: false,
                                 pointRadius: 0,
                                 tension: 0.4,
-                                borderWidth: 1,
-                                order: 3
+                                borderWidth: 1
                             }
                         ]
                     },
@@ -162,7 +141,7 @@
                         maintainAspectRatio: false,
                         plugins: { 
                             legend: { display: false },
-                            tooltip: { mode: 'index', intersect: false }
+                            annotation: { annotations: annotations } // LISÄTTY: Yöalueet
                         },
                         scales: {
                             x: { grid: { display: false }, ticks: { font: { size: 9 } } },
