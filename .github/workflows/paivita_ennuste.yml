@@ -20,7 +20,7 @@ jobs:
         run: pip install pandas requests
       - name: Run prediction
         run: python ennusta_laru.py
-    - name: Commit and Push
+   - name: Commit and Push
         run: |
           git config --global user.name "Laru Oracle"
           git config --global user.email "oracle@laru.fi"
@@ -35,6 +35,9 @@ jobs:
           if git diff --staged --quiet; then
             echo "Ei muutoksia datassa."
           else
+            git commit -m "Update prediction data $(date)"
+            git push origin main --force
+          fi
             git commit -m "Update prediction data $(date)"
             git push origin main
           fi
