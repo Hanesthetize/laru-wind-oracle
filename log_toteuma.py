@@ -13,11 +13,12 @@ def hae_laru_actual():
         res = r.json()
         
         if 'wind_avg' in res and 'wind_direction' in res:
-            ws = round(float(res['wind_avg']) * 0.51444, 1) # kts -> m/s
+            # Muutetaan knots -> m/s
+            ws = round(float(res['wind_avg']) * 0.51444, 1)
             wd = int(res['wind_direction'])
             return ws, wd
-    except:
-        pass
+    except Exception as e:
+        print(f"Windguru error: {e}")
     return None, None
 
 def loggaa_kaikki():
@@ -30,40 +31,42 @@ def loggaa_kaikki():
         
         if data_node is not None and data_node.text:
             last_obs = data_node.text.strip().split('\n')[-1].split()
-            # FMI arvot
-            temp = float(last_obs[0])
+            
+            # FMI tiedot (Harmaja)
+            temp = float(last_obs[0]) if last_obs[0] != 'NaN' else "nan"
             har_ws = float(last_obs[1])
             har_gust = float(last_obs[2])
             har_dir = float(last_obs[3])
             
-            # Laru toteuma
+            # Laru toteuma (Windguru)
             laru_ws, laru_dir = hae_laru_actual()
             
-            # Laru ennuste (nykyinen 0.57 kerroin tai blokki)
+            # Meidän nykyinen ennustekaava vertailuun
             if 180 <= har_dir <= 240:
                 laru_pred = round(har_ws * 0.57, 1)
             else:
                 laru_pred = round(har_ws * 0.45, 1)
 
+            # Aika
             aika_str = (datetime.now() + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
             
-            file_path = 'history.csv'
             # JÄRJESTYS: aika, temp, har_ws, har_gust, har_dir, laru_ws, laru_dir, laru_pred
             row = [aika_str, temp, har_ws, har_gust, har_dir, laru_ws, laru_dir, laru_pred]
             
-            # Jos tiedosto on vanha ja siinä on väärä määrä sarakkeita, se kannattaa ehkä resetoida
+            file_path = 'history.csv'
             file_exists = os.path.isfile(file_path)
             
             with open(file_path, 'a', newline='') as f:
                 writer = csv.writer(f)
                 if not file_exists:
+                    # Otsikot täsmälleen datan mukaan
                     writer.writerow(['aika', 'temp', 'har_ws', 'har_gust', 'har_dir', 'laru_ws', 'laru_dir', 'laru_pred'])
                 writer.writerow(row)
                 
-            print(f"✅ Logattu: Laru actual {laru_ws} m/s ({laru_dir}°) | Predicted {laru_pred} m/s")
+            print(f"✅ Tallennettu: Laru {laru_ws}m/s, Suunta {laru_dir}")
             
     except Exception as e:
-        print(f"❌ Virhe: {e}")
+        print(f"❌ Virhe logituksessa: {e}")
 
 if __name__ == "__main__":
     loggaa_kaikki()
