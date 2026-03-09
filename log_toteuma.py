@@ -4,54 +4,68 @@ from datetime import datetime, timedelta
 import csv
 import os
 
+# Meidän kertoimet (Maaliskuu)
+KK_BASE = {1: 0.68, 2: 0.66, 3: 0.57, 4: 0.61, 5: 0.59, 6: 0.63, 7: 0.63, 8: 0.58, 9: 0.60, 10: 0.65, 11: 0.69, 12: 0.64}
+
+def laske_laru_teho(har_ms, suunta, pvm_obj):
+    if not (180 <= suunta <= 240): 
+        return round(har_ms * 0.45, 1)
+    base = KK_BASE.get(pvm_obj.month, 0.63)
+    return round(har_ms * base, 1)
+
 def hae_laru_actual():
-    """Hakee tuulen nopeuden JA suunnan Larun Windguru-asemalta"""
+    """Hakee nopeuden JA suunnan Larun Windguru-asemalta"""
+    print("🌐 Haetaan Windguru (Laru Station 47) dataa...")
     try:
         wg_url = "https://www.windguru.cz/int/iapi.php?q=station_data_current&id_station=47"
-        headers = {'User-Agent': 'Mozilla/5.0'}
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Referer': 'https://www.windguru.cz/station/47'
+        }
         r = requests.get(wg_url, headers=headers, timeout=15)
         res = r.json()
         
-        if 'wind_avg' in res and 'wind_direction' in res:
-            # Muutetaan knots -> m/s
+        if 'wind_avg' in res:
             ws = round(float(res['wind_avg']) * 0.51444, 1)
-            wd = int(res['wind_direction'])
-            return ws, wd
+            # LISÄTTY: Otetaan myös suunta talteen
+            wd = int(res.get('wind_direction', 0))
+            print(f"✅ Laru OK: {ws} m/s, {wd}°")
+            return ws, wd # Palauttaa nyt kaksi arvoa
+        else:
+            print(f"⚠️ 'wind_avg' puuttui vastauksesta")
+            return None, None
     except Exception as e:
-        print(f"Windguru error: {e}")
-    return None, None
+        print(f"⚠️ Windguru-virhe: {e}")
+        return None, None
 
 def loggaa_kaikki():
+    print("📡 Käynnistetään tiedonkeruu...")
     fmi_url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::observations::weather::multipointcoverage&fmisid=100996&parameters=t2m,ws_10min,wg_10min,winddirection"
     
     try:
         r = requests.get(fmi_url, timeout=15)
         root = ET.fromstring(r.content)
-        data_node = next((elem for elem in root.iter() if elem.tag.endswith('doubleOrNilReasonTupleList')), None)
+        data_node = None
+        for elem in root.iter():
+            if elem.tag.endswith('doubleOrNilReasonTupleList'):
+                data_node = elem
+                break
         
         if data_node is not None and data_node.text:
-            last_obs = data_node.text.strip().split('\n')[-1].split()
+            all_rows = data_node.text.strip().split('\n')
+            last_obs = all_rows[-1].split()
             
-            # FMI tiedot (Harmaja)
-            temp = float(last_obs[0]) if last_obs[0] != 'NaN' else "nan"
+            temp = float(last_obs[0])
             har_ws = float(last_obs[1])
             har_gust = float(last_obs[2])
             har_dir = float(last_obs[3])
             
-            # Laru toteuma (Windguru)
+            # HAETAAN LARUN DATA (Huom: kaksi muuttujaa!)
             laru_ws, laru_dir = hae_laru_actual()
             
-            # Meidän nykyinen ennustekaava vertailuun
-            if 180 <= har_dir <= 240:
-                laru_pred = round(har_ws * 0.57, 1)
-            else:
-                laru_pred = round(har_ws * 0.45, 1)
-
-            # Aika
-            aika_str = (datetime.now() + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
-            
-            # JÄRJESTYS: aika, temp, har_ws, har_gust, har_dir, laru_ws, laru_dir, laru_pred
-            row = [aika_str, temp, har_ws, har_gust, har_dir, laru_ws, laru_dir, laru_pred]
+            pvm = datetime.now() + timedelta(hours=2)
+            laru_predicted = laske_laru_teho(har_ws, har_dir, pvm)
+            aika_str = pvm.strftime("%Y-%m-%d %H:%M")
             
             file_path = 'history.csv'
             file_exists = os.path.isfile(file_path)
@@ -59,14 +73,16 @@ def loggaa_kaikki():
             with open(file_path, 'a', newline='') as f:
                 writer = csv.writer(f)
                 if not file_exists:
-                    # Otsikot täsmälleen datan mukaan
-                    writer.writerow(['aika', 'temp', 'har_ws', 'har_gust', 'har_dir', 'laru_ws', 'laru_dir', 'laru_pred'])
-                writer.writerow(row)
+                    # Uudet otsikot (8 saraketta)
+                    writer.writerow(['aika', 'temp', 'har_ws', 'har_gust', 'har_dir', 'laru_actual', 'laru_dir', 'laru_predicted'])
                 
-            print(f"✅ Tallennettu: Laru {laru_ws}m/s, Suunta {laru_dir}")
+                # Kirjoitetaan kaikki 8 arvoa
+                writer.writerow([aika_str, temp, har_ws, har_gust, har_dir, laru_ws, laru_dir, laru_predicted])
+            
+            print(f"🏁 VALMIS! Rivi lisätty: Laru {laru_ws} m/s, {laru_dir}°")
             
     except Exception as e:
-        print(f"❌ Virhe logituksessa: {e}")
+        print(f"💥 KRIITTINEN VIRHE: {e}")
 
 if __name__ == "__main__":
     loggaa_kaikki()
