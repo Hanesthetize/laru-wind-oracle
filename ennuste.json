@@ -1,352 +1,352 @@
 [
     {
-        "aika_str": "10.03. klo 21:56",
-        "har_ms": 7.55,
-        "laru_ms": 4.3,
-        "har_dir": 235.0,
-        "gust_ms": 5.3
-    },
-    {
-        "aika_str": "10.03. klo 22:56",
+        "aika_str": "10.03. klo 22:58",
         "har_ms": 7.19,
         "laru_ms": 4.1,
         "har_dir": 229.0,
         "gust_ms": 5.1
     },
     {
-        "aika_str": "10.03. klo 23:56",
+        "aika_str": "10.03. klo 23:58",
         "har_ms": 6.71,
         "laru_ms": 3.8,
         "har_dir": 235.0,
         "gust_ms": 5.0
     },
     {
-        "aika_str": "11.03. klo 00:56",
+        "aika_str": "11.03. klo 00:58",
         "har_ms": 5.72,
         "laru_ms": 3.3,
         "har_dir": 233.0,
         "gust_ms": 4.6
     },
     {
-        "aika_str": "11.03. klo 01:56",
+        "aika_str": "11.03. klo 01:58",
         "har_ms": 5.77,
         "laru_ms": 3.3,
         "har_dir": 235.0,
         "gust_ms": 4.0
     },
     {
-        "aika_str": "11.03. klo 02:56",
+        "aika_str": "11.03. klo 02:58",
         "har_ms": 5.79,
         "laru_ms": 3.3,
         "har_dir": 231.0,
         "gust_ms": 3.9
     },
     {
-        "aika_str": "11.03. klo 03:56",
+        "aika_str": "11.03. klo 03:58",
         "har_ms": 6.2,
         "laru_ms": 3.5,
         "har_dir": 229.0,
         "gust_ms": 4.3
     },
     {
-        "aika_str": "11.03. klo 04:56",
+        "aika_str": "11.03. klo 04:58",
         "har_ms": 7.27,
         "laru_ms": 4.1,
         "har_dir": 222.0,
         "gust_ms": 5.0
     },
     {
-        "aika_str": "11.03. klo 05:56",
+        "aika_str": "11.03. klo 05:58",
         "har_ms": 8.32,
         "laru_ms": 4.7,
         "har_dir": 220.0,
         "gust_ms": 5.8
     },
     {
-        "aika_str": "11.03. klo 06:56",
+        "aika_str": "11.03. klo 06:58",
         "har_ms": 8.52,
         "laru_ms": 4.9,
         "har_dir": 223.0,
         "gust_ms": 6.0
     },
     {
-        "aika_str": "11.03. klo 07:56",
+        "aika_str": "11.03. klo 07:58",
         "har_ms": 8.34,
         "laru_ms": 4.8,
         "har_dir": 219.0,
         "gust_ms": 5.9
     },
     {
-        "aika_str": "11.03. klo 08:56",
+        "aika_str": "11.03. klo 08:58",
         "har_ms": 8.49,
         "laru_ms": 4.8,
         "har_dir": 224.0,
         "gust_ms": 6.0
     },
     {
-        "aika_str": "11.03. klo 09:56",
+        "aika_str": "11.03. klo 09:58",
         "har_ms": 8.13,
         "laru_ms": 4.6,
         "har_dir": 226.0,
         "gust_ms": 5.9
     },
     {
-        "aika_str": "11.03. klo 10:56",
+        "aika_str": "11.03. klo 10:58",
         "har_ms": 8.09,
         "laru_ms": 4.6,
         "har_dir": 223.0,
         "gust_ms": 5.6
     },
     {
-        "aika_str": "11.03. klo 11:56",
+        "aika_str": "11.03. klo 11:58",
         "har_ms": 8.2,
         "laru_ms": 4.7,
         "har_dir": 228.0,
         "gust_ms": 5.8
     },
     {
-        "aika_str": "11.03. klo 12:56",
+        "aika_str": "11.03. klo 12:58",
         "har_ms": 7.48,
         "laru_ms": 4.3,
         "har_dir": 234.0,
         "gust_ms": 5.6
     },
     {
-        "aika_str": "11.03. klo 13:56",
+        "aika_str": "11.03. klo 13:58",
         "har_ms": 6.74,
         "laru_ms": 3.8,
         "har_dir": 235.0,
         "gust_ms": 5.1
     },
     {
-        "aika_str": "11.03. klo 14:56",
+        "aika_str": "11.03. klo 14:58",
         "har_ms": 6.54,
         "laru_ms": 3.7,
         "har_dir": 232.0,
         "gust_ms": 4.6
     },
     {
-        "aika_str": "11.03. klo 15:56",
+        "aika_str": "11.03. klo 15:58",
         "har_ms": 5.61,
         "laru_ms": 3.2,
         "har_dir": 234.0,
         "gust_ms": 4.6
     },
     {
-        "aika_str": "11.03. klo 16:56",
+        "aika_str": "11.03. klo 16:58",
         "har_ms": 4.05,
         "laru_ms": 2.3,
         "har_dir": 231.0,
         "gust_ms": 3.8
     },
     {
-        "aika_str": "11.03. klo 17:56",
+        "aika_str": "11.03. klo 17:58",
         "har_ms": 3.95,
         "laru_ms": 2.3,
         "har_dir": 223.0,
         "gust_ms": 2.8
     },
     {
-        "aika_str": "11.03. klo 18:56",
+        "aika_str": "11.03. klo 18:58",
         "har_ms": 4.1,
         "laru_ms": 2.3,
         "har_dir": 206.0,
         "gust_ms": 2.8
     },
     {
-        "aika_str": "11.03. klo 19:56",
+        "aika_str": "11.03. klo 19:58",
         "har_ms": 5.23,
         "laru_ms": 3.0,
         "har_dir": 206.0,
         "gust_ms": 4.0
     },
     {
-        "aika_str": "11.03. klo 20:56",
+        "aika_str": "11.03. klo 20:58",
         "har_ms": 5.7,
         "laru_ms": 3.2,
         "har_dir": 201.0,
         "gust_ms": 3.9
     },
     {
-        "aika_str": "11.03. klo 21:56",
+        "aika_str": "11.03. klo 21:58",
         "har_ms": 6.76,
         "laru_ms": 3.9,
         "har_dir": 199.0,
         "gust_ms": 4.6
     },
     {
-        "aika_str": "11.03. klo 22:56",
+        "aika_str": "11.03. klo 22:58",
         "har_ms": 5.14,
         "laru_ms": 2.9,
         "har_dir": 204.0,
         "gust_ms": 4.6
     },
     {
-        "aika_str": "11.03. klo 23:56",
+        "aika_str": "11.03. klo 23:58",
         "har_ms": 5.23,
         "laru_ms": 3.0,
         "har_dir": 207.0,
         "gust_ms": 3.5
     },
     {
-        "aika_str": "12.03. klo 00:56",
+        "aika_str": "12.03. klo 00:58",
         "har_ms": 6.79,
         "laru_ms": 3.9,
         "har_dir": 225.0,
         "gust_ms": 4.6
     },
     {
-        "aika_str": "12.03. klo 01:56",
+        "aika_str": "12.03. klo 01:58",
         "har_ms": 7.38,
         "laru_ms": 4.2,
         "har_dir": 212.0,
         "gust_ms": 5.0
     },
     {
-        "aika_str": "12.03. klo 02:56",
+        "aika_str": "12.03. klo 02:58",
         "har_ms": 7.28,
         "laru_ms": 4.1,
         "har_dir": 205.0,
         "gust_ms": 5.1
     },
     {
-        "aika_str": "12.03. klo 03:56",
+        "aika_str": "12.03. klo 03:58",
         "har_ms": 5.76,
         "laru_ms": 3.3,
         "har_dir": 190.0,
         "gust_ms": 4.9
     },
     {
-        "aika_str": "12.03. klo 04:56",
+        "aika_str": "12.03. klo 04:58",
         "har_ms": 5.64,
         "laru_ms": 3.2,
         "har_dir": 184.0,
         "gust_ms": 4.2
     },
     {
-        "aika_str": "12.03. klo 05:56",
+        "aika_str": "12.03. klo 05:58",
         "har_ms": 5.85,
         "laru_ms": 2.6,
         "har_dir": 165.0,
         "gust_ms": 3.2
     },
     {
-        "aika_str": "12.03. klo 06:56",
+        "aika_str": "12.03. klo 06:58",
         "har_ms": 10.24,
         "laru_ms": 4.6,
         "har_dir": 177.0,
         "gust_ms": 5.6
     },
     {
-        "aika_str": "12.03. klo 07:56",
+        "aika_str": "12.03. klo 07:58",
         "har_ms": 8.85,
         "laru_ms": 5.0,
         "har_dir": 193.0,
         "gust_ms": 7.2
     },
     {
-        "aika_str": "12.03. klo 08:56",
+        "aika_str": "12.03. klo 08:58",
         "har_ms": 7.81,
         "laru_ms": 4.5,
         "har_dir": 207.0,
         "gust_ms": 6.0
     },
     {
-        "aika_str": "12.03. klo 09:56",
+        "aika_str": "12.03. klo 09:58",
         "har_ms": 8.87,
         "laru_ms": 5.1,
         "har_dir": 214.0,
         "gust_ms": 6.0
     },
     {
-        "aika_str": "12.03. klo 10:56",
+        "aika_str": "12.03. klo 10:58",
         "har_ms": 9.04,
         "laru_ms": 5.2,
         "har_dir": 224.0,
         "gust_ms": 6.2
     },
     {
-        "aika_str": "12.03. klo 11:56",
+        "aika_str": "12.03. klo 11:58",
         "har_ms": 9.08,
         "laru_ms": 5.2,
         "har_dir": 230.0,
         "gust_ms": 6.5
     },
     {
-        "aika_str": "12.03. klo 12:56",
+        "aika_str": "12.03. klo 12:58",
         "har_ms": 9.08,
         "laru_ms": 5.2,
         "har_dir": 233.0,
         "gust_ms": 6.3
     },
     {
-        "aika_str": "12.03. klo 13:56",
+        "aika_str": "12.03. klo 13:58",
         "har_ms": 9.09,
         "laru_ms": 5.2,
         "har_dir": 231.0,
         "gust_ms": 6.3
     },
     {
-        "aika_str": "12.03. klo 14:56",
+        "aika_str": "12.03. klo 14:58",
         "har_ms": 9.98,
         "laru_ms": 5.7,
         "har_dir": 239.0,
         "gust_ms": 6.9
     },
     {
-        "aika_str": "12.03. klo 15:56",
+        "aika_str": "12.03. klo 15:58",
         "har_ms": 8.42,
         "laru_ms": 4.8,
         "har_dir": 233.0,
         "gust_ms": 7.2
     },
     {
-        "aika_str": "12.03. klo 16:56",
+        "aika_str": "12.03. klo 16:58",
         "har_ms": 8.0,
         "laru_ms": 4.6,
         "har_dir": 230.0,
         "gust_ms": 5.8
     },
     {
-        "aika_str": "12.03. klo 17:56",
+        "aika_str": "12.03. klo 17:58",
         "har_ms": 7.13,
         "laru_ms": 4.1,
         "har_dir": 234.0,
         "gust_ms": 6.3
     },
     {
-        "aika_str": "12.03. klo 18:56",
+        "aika_str": "12.03. klo 18:58",
         "har_ms": 5.44,
         "laru_ms": 3.1,
         "har_dir": 237.0,
         "gust_ms": 5.0
     },
     {
-        "aika_str": "12.03. klo 19:56",
+        "aika_str": "12.03. klo 19:58",
         "har_ms": 6.9,
         "laru_ms": 3.9,
         "har_dir": 226.0,
         "gust_ms": 4.7
     },
     {
-        "aika_str": "12.03. klo 20:56",
+        "aika_str": "12.03. klo 20:58",
         "har_ms": 7.84,
         "laru_ms": 4.5,
         "har_dir": 222.0,
         "gust_ms": 5.4
     },
     {
-        "aika_str": "12.03. klo 21:56",
+        "aika_str": "12.03. klo 21:58",
         "har_ms": 9.94,
         "laru_ms": 5.7,
         "har_dir": 221.0,
         "gust_ms": 7.1
     },
     {
-        "aika_str": "12.03. klo 22:56",
+        "aika_str": "12.03. klo 22:58",
         "har_ms": 8.96,
         "laru_ms": 5.1,
         "har_dir": 212.0,
         "gust_ms": 6.9
+    },
+    {
+        "aika_str": "12.03. klo 23:58",
+        "har_ms": 9.13,
+        "laru_ms": 5.2,
+        "har_dir": 216.0,
+        "gust_ms": 6.6
     }
 ]
