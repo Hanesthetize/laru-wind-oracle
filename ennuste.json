@@ -1,12 +1,5 @@
 [
     {
-        "aika_str": "11.03. klo 10:07",
-        "har_ms": 7.8,
-        "laru_ms": 4.4,
-        "har_dir": 229.0,
-        "gust_ms": 5.8
-    },
-    {
         "aika_str": "11.03. klo 11:07",
         "har_ms": 8.04,
         "laru_ms": 4.6,
@@ -348,5 +341,12 @@
         "laru_ms": 6.3,
         "har_dir": 187.0,
         "gust_ms": 8.3
+    },
+    {
+        "aika_str": "13.03. klo 12:07",
+        "har_ms": 10.28,
+        "laru_ms": 5.9,
+        "har_dir": 187.0,
+        "gust_ms": 7.6
     }
 ]
