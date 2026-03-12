@@ -12,7 +12,6 @@
         h1 { color: #1a2a3a; text-align: center; margin-bottom: 5px; font-size: 1.5em; }
         .chart-wrapper { position: relative; height: 350px; width: 100%; margin-top: 10px; }
         
-        /* Selite-alue */
         .custom-legend { 
             display: flex; 
             justify-content: center; 
@@ -25,22 +24,23 @@
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .line-sample { width: 30px; height: 0; border-top-width: 3px; border-top-style: solid; }
 
-        #arrow-row { display: flex; margin-left: 32px; margin-right: 10px; border-top: 1px solid #eee; padding-top: 5px; }
+        #arrow-row { display: flex; margin-left: 35px; margin-right: 15px; border-top: 1px solid #eee; padding-top: 5px; }
         .arrow-item { flex: 1; text-align: center; font-size: 1em; cursor: help; }
-        .date-label { font-size: 0.7em; color: #888; text-align: center; margin-top: 5px; font-weight: bold; }
+        .date-row { display: flex; margin-left: 35px; margin-right: 15px; margin-top: 5px; }
+        .date-label { font-size: 0.7em; color: #888; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🌬️ Laru Wind Oracle</h1>
-        <div style="text-align: center; font-size: 0.8em; color: #666;">Hanesthetize Local Surf Model</div>
+        <div style="text-align: center; font-size: 0.8em; color: #666;">Hanesthetize Local Surf Model V4.2</div>
 
         <div class="chart-wrapper">
             <canvas id="windChart"></canvas>
         </div>
         
         <div id="arrow-row"></div>
-        <div id="date-row" style="display: flex; margin-left: 32px; margin-right: 10px;"></div>
+        <div id="date-row" class="date-row"></div>
 
         <div class="custom-legend">
             <div class="legend-item">
@@ -49,15 +49,11 @@
             </div>
             <div class="legend-item">
                 <div class="line-sample" style="border-top-color: #2980b9; border-top-width: 1px;"></div>
-                <span>Laru Puuska</span>
+                <span>Puuska</span>
             </div>
             <div class="legend-item">
                 <div class="line-sample" style="border-top-color: #ccc; border-top-width: 1px; border-top-style: dashed;"></div>
-                <span>Harmaja (ref)</span>
-            </div>
-            <div class="legend-item">
-                <div style="width: 15px; height: 15px; background: rgba(0,0,0,0.05); border-radius: 3px;"></div>
-                <span>Yö (19-07)</span>
+                <span>Harmaja</span>
             </div>
         </div>
 
@@ -78,16 +74,19 @@
             try {
                 const response = await fetch('ennuste.json?t=' + new Date().getTime());
                 const data = await response.json();
-                const displayData = data.slice(0, 30);
+                const displayData = data.slice(0, 24);
 
-                const labels = displayData.map(d => d.aika_str.split('klo')[1].trim());
-                const dates = displayData.map(d => d.aika_str.split('klo')[0].trim());
-                const laruData = displayData.map(d => d.laru_ms);
-                const harData = displayData.map(d => d.har_ms);
-                const gustData = displayData.map(d => d.gust_ms || 0);
-                const directions = displayData.map(d => d.har_dir);
+                const labels = displayData.map(d => {
+                    const t = d.aika_str.includes('klo') ? d.aika_str.split('klo')[1] : d.aika_str.split(' ')[1];
+                    return t.trim();
+                });
+                
+                const dates = displayData.map(d => d.aika_str.split(' ')[0].trim());
+                const laruData = displayData.map(d => d.laru_ms || d.ws);
+                const harData = displayData.map(d => d.har_ms || d.har_ws);
+                const gustData = displayData.map(d => d.gust_ms || d.gust || 0);
+                const directions = displayData.map(d => d.har_dir || d.dir);
 
-                // LISÄTTY: Luodaan yöalueet datan perusteella
                 const nightAnnotations = {};
                 labels.forEach((time, i) => {
                     const hour = parseInt(time.split(':')[0]);
@@ -104,8 +103,8 @@
 
                 const arrowRow = document.getElementById('arrow-row');
                 const dateRow = document.getElementById('date-row');
-                
                 let lastDate = "";
+
                 displayData.forEach((d, i) => {
                     const aSpan = document.createElement('span');
                     aSpan.className = "arrow-item";
@@ -124,22 +123,11 @@
                 });
 
                 const ctx = document.getElementById('windChart').getContext('2d');
-                
                 new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
-                            {
-                                label: 'Laru Puuska',
-                                data: gustData,
-                                borderColor: '#2980b9',
-                                borderWidth: 1,
-                                fill: false,
-                                pointRadius: 0,
-                                tension: 0.4,
-                                order: 2
-                            },
                             {
                                 label: 'Laru Teho',
                                 data: laruData,
@@ -160,9 +148,19 @@
                                     backgroundColor: ctx => {
                                         const i = ctx.p0DataIndex;
                                         const d = displayData[i];
-                                        return (d.laru_ms >= 5 && d.har_dir >= 170 && d.har_dir <= 250) ? 'rgba(46, 204, 113, 0.2)' : 'rgba(52, 152, 219, 0.1)';
+                                        return (d.laru_ms >= 5 && d.har_dir >= 170 && d.har_dir <= 250) ? 'rgba(46, 204, 113, 0.15)' : 'rgba(52, 152, 219, 0.05)';
                                     }
                                 }
+                            },
+                            {
+                                label: 'Laru Puuska',
+                                data: gustData,
+                                borderColor: '#2980b9',
+                                borderWidth: 1,
+                                fill: false,
+                                pointRadius: 0,
+                                tension: 0.4,
+                                order: 2
                             },
                             {
                                 label: 'Harmaja',
@@ -182,10 +180,7 @@
                         plugins: { 
                             legend: { display: false },
                             tooltip: { mode: 'index', intersect: false },
-                            // LISÄTTY: Annotation asetukset
-                            annotation: {
-                                annotations: nightAnnotations
-                            }
+                            annotation: { annotations: nightAnnotations }
                         },
                         scales: {
                             x: { grid: { display: false }, ticks: { font: { size: 9 } } },
