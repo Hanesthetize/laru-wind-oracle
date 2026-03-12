@@ -40,10 +40,18 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Lisätään kaikki tiedostot (|| true estää kaatumisen jos tiedostoa ei vielä ole)
+          # Haetaan mahdolliset muutokset alta, jotta push ei hylkää
+          git pull origin main --rebase || echo "Ei noudettavaa"
+          
           git add ennuste.json || true
           git add history.csv || true
           git add ennuste_vertailu.csv || true
           
-          git commit -m "Update oracle data and logs [skip ci]" || echo "Ei uutta commitattavaa"
-          git push || echo "Ei uutta pushattavaa"
+          if git diff --staged --quiet; then
+            echo "Ei uutta commitattavaa"
+          else
+            git commit -m "Update oracle data and logs [skip ci]"
+            # Käytetään force-pushia vain jos rebase epäonnistuu, 
+            # tai pusketaan normaalisti jos kaikki ok.
+            git push origin main
+          fi
