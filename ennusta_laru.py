@@ -4,134 +4,132 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 import sys
 import os
+import csv
 
 # --- ASETUKSET ---
-# Varmista, että coeffs.json on samassa kansiossa kuin tämä skripti
 COEFFS_FILE = 'coeffs.json'
+LOG_FILE = 'ennuste_vertailu.csv'
 
-def lataa_kertoimet():
-    """Lataa historialliset kertoimet JSON-tiedostosta."""
-    if os.path.exists(COEFFS_FILE):
-        try:
-            with open(COEFFS_FILE, 'r') as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"❌ Virhe kertoimien lukemisessa: {e}")
-            return None
-    else:
-        print(f"⚠️ {COEFFS_FILE} ei löytynyt! Käytetään oletuskerrointa 0.55.")
-        return None
-
-# Ladataan kertoimet globaaliksi muuttujaksi kerran käynnistyksessä
-COEFFS = lataa_kertoimet()
-
-def hae_suomen_aika_offset(pvm_utc):
+def hae_fmi_kaikki_data(fmisid=None, paikka=None):
     """
-    Laskee onko annettu UTC-aika Suomen kesä- vai talviajassa.
-    Kesäaika alkaa maaliskuun viimeisenä sunnuntaina ja päättyy lokakuun viimeisenä.
+    Hakee laajan setin parametreja: Tuuli, Suunta, Puuska, Lämpötila, Paine, Pilvisyys.
     """
-    vuosi = pvm_utc.year
+    url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::forecast::harmonie::surface::point::multipointcoverage"
+    if fmisid: url += f"&fmisid={fmisid}"
+    else: url += f"&place={paikka}"
     
-    # Maaliskuun viimeinen sunnuntai
-    maalis_loppu = datetime(vuosi, 3, 31, 1)
-    alku = maalis_loppu - timedelta(days=(maalis_loppu.weekday() + 1) % 7)
+    # Lisätty: Temperature, Pressure, TotalCloudCover
+    url += "&parameters=WindSpeedMS,WindDirection,WindGust,Temperature,Pressure,TotalCloudCover"
     
-    # Lokakuun viimeinen sunnuntai
-    loka_loppu = datetime(vuosi, 10, 31, 1)
-    loppu = loka_loppu - timedelta(days=(loka_loppu.weekday() + 1) % 7)
-    
-    if alku <= pvm_utc < loppu:
-        return 3 # Kesäaika (UTC+3)
-    else:
-        return 2 # Talviaika (UTC+2)
-
-def hae_kerroin(pvm_obj_utc, suunta):
-    """
-    Etsii matriisista tarkan kertoimen kuukauden, tunnin ja suunnan perusteella.
-    Muuntaa UTC-ajan ensin Suomen paikalliseksi ajaksi.
-    """
-    if not COEFFS:
-        return 0.55
-
-    # Korjataan aika Suomen paikalliseksi ajaksi kertoimen hakua varten
-    offset = hae_suomen_aika_offset(pvm_obj_utc)
-    suomen_aika = pvm_obj_utc + timedelta(hours=offset)
-    
-    kk = str(suomen_aika.month)
-    tunti = str(suomen_aika.hour)
-    # Ryhmitellään suunta 10 asteen sektoreihin (esim. 227 -> 220)
-    sektori = str(int(suunta // 10) * 10)
-
     try:
-        # Haetaan polulla: Kuukausi -> Sektori -> Tunti
-        return COEFFS[kk][sektori][tunti]
-    except KeyError:
-        # Jos tarkkaa osumaa ei löydy (harvinainen suunta/aika), palautetaan perusarvo
-        return 0.55
+        r = requests.get(url, timeout=20)
+        root = ET.fromstring(r.content)
+        data_node = next((e for e in root.iter() if e.tag.endswith('doubleOrNilReasonTupleList')), None)
+        if data_node:
+            return data_node.text.strip().split('\n')
+    except Exception as e:
+        print(f"Virhe FMI-haussa: {e}")
+    return None
 
 def paivita_ennuste():
-    print("🚀 Käynnistetään Laru Oraakkeli V3.1 (Paikallisaika-korjattu)...")
+    print("🚀 Käynnistetään Laru Oraakkeli V4.1 (Petri Edition)...")
     
-    # Harmajan FMI-tunnus: 100996
-    url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::forecast::harmonie::surface::point::multipointcoverage&fmisid=100996&parameters=WindSpeedMS,WindDirection,WindGust"
+    # Haetaan laaja data: Harmaja, Kaisaniemi (lämpövertailu) ja Lauttasaari
+    har_rows = hae_fmi_kaikki_data(fmisid=100996)       # Harmaja (Meri)
+    kai_rows = hae_fmi_kaikki_data(fmisid=100971)       # Kaisaniemi (Manner)
+    lar_rows = hae_fmi_kaikki_data(paikka="lauttasaari,helsinki") # Laru FMI-arvaus
     
-    try:
-        r = requests.get(url, timeout=30)
-        r.raise_for_status()
-        root = ET.fromstring(r.content)
-        
-        data_node = next((e for e in root.iter() if e.tag.endswith('doubleOrNilReasonTupleList')), None)
-        
-        if data_node is None or not data_node.text:
-            print("❌ Virhe: Dataa ei löytynyt XML:stä.")
-            return
+    if not har_rows or not kai_rows or not lar_rows:
+        print("❌ Dataa ei saatu riittävästi.")
+        return
 
-        values = data_node.text.strip().split('\n')
-        ennusteet = []
+    ennusteet = []
+    log_rivit = []
+    nykyhetki_utc = datetime.utcnow()
+
+    # Käydään läpi seuraavat 24 tuntia
+    for i in range(min(24, len(har_rows), len(kai_rows))):
+        h = har_rows[i].split() # Harmaja: [ws, dir, gust, temp, pres, cloud]
+        k = kai_rows[i].split() # Kaisaniemi: [ws, dir, gust, temp, pres, cloud]
+        l = lar_rows[i].split() # Laru FMI: [ws, dir, gust, temp, pres, cloud]
         
-        # FMI:n harmonie-ennuste alkaa yleensä nykyhetkestä (UTC)
-        nykyhetki_utc = datetime.utcnow()
+        if len(h) < 6 or len(k) < 6: continue
+        
+        # Luetaan arvot
+        h_ws, h_dir, h_gust = float(h[0]), float(h[1]), float(h[2])
+        h_temp, h_pres, h_cloud = float(h[3]), float(h[4]), float(h[5])
+        k_temp = float(k[3])
+        l_fmi_ws = float(l[0])
+        
+        # Lämpötilaero: Manner - Meri (Positiivinen = Manner lämpimämpi = Merituulipotentiaali)
+        delta_t = round(k_temp - h_temp, 1)
+        
+        # Meidän Oraakkeli (vanha matriisi vielä pohjana)
+        ennuste_aika_utc = nykyhetki_utc + timedelta(hours=i)
+        from __main__ import hae_kerroin # Varmistetaan että funktio löytyy
+        kerroin = hae_kerroin(ennuste_aika_utc, h_dir)
+        oraakkeli_ws = round(h_ws * kerroin, 1)
 
-        for i, val in enumerate(values):
-            parts = val.split()
-            if len(parts) < 3: continue 
-            
-            har_ms = float(parts[0])
-            har_dir = float(parts[1])
-            har_gust = float(parts[2])
-            
-            # Ennustehetki UTC-muodossa
-            ennuste_aika_utc = nykyhetki_utc + timedelta(hours=i)
-            
-            # Haetaan dynaaminen kerroin (hoitaa sisäisesti UTC -> FI muunnos)
-            kerroin = hae_kerroin(ennuste_aika_utc, har_dir)
-            
-            # Lasketaan Laru-lukemat
-            laru_ms = round(har_ms * kerroin, 1)
-            laru_gust = round(har_gust * kerroin, 1)
-            
-            # Viestiin näkyvä aika Suomen ajassa
-            offset = hae_suomen_aika_offset(ennuste_aika_utc)
-            naytto_aika = ennuste_aika_utc + timedelta(hours=offset)
-            aika_str = naytto_aika.strftime("%d.%m. klo %H:%M")
-            
-            ennusteet.append({
-                "aika_str": aika_str,
-                "har_ms": har_ms,
-                "laru_ms": laru_ms,
-                "har_dir": har_dir,
-                "gust_ms": laru_gust,
-                "kerroin": kerroin
-            })
-            
-        with open('ennuste.json', 'w') as f:
-            json.dump(ennusteet, f, indent=4)
-            
-        print(f"✅ VALMIS: Päivitetty {len(ennusteet)} tuntia historiallisella matriisilla.")
+        # Muotoillaan aika näyttöä varten
+        from __main__ import hae_suomen_aika_offset
+        offset = hae_suomen_aika_offset(ennuste_aika_utc)
+        aika_str = (ennuste_aika_utc + timedelta(hours=offset)).strftime("%d.%m. %H:%M")
 
-    except Exception as e:
-        print(f"❌ VIRHE: {e}")
-        sys.exit(1)
+        # JSON Web-sivulle
+        ennusteet.append({
+            "aika_str": aika_str,
+            "har_ms": h_ws,
+            "laru_ms": oraakkeli_ws,
+            "laru_fmi_ms": l_fmi_ws,
+            "har_dir": h_dir,
+            "delta_t": delta_t,
+            "cloud": h_cloud
+        })
+
+        # LOKIIN (Petrin RandomForestia varten)
+        if i == 0:
+            # Aika, WS, Dir, Gust, Temp, Pres, Cloud, DeltaT, Laru_FMI, Oraakkeli
+            log_rivit.append([
+                datetime.now().strftime("%Y-%m-%d %H:%M"),
+                h_ws, h_dir, h_gust, h_temp, h_pres, h_cloud, delta_t, l_fmi_ws, oraakkeli_ws
+            ])
+
+    # Tallennukset
+    with open('ennuste.json', 'w') as f:
+        json.dump(ennusteet, f, indent=4)
+
+    file_exists = os.path.isfile(LOG_FILE)
+    with open(LOG_FILE, 'a', newline='') as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(['Aika', 'Har_WS', 'Har_Dir', 'Har_Gust', 'Har_Temp', 'Har_Pres', 'Har_Cloud', 'DeltaT', 'Laru_FMI_WS', 'Oraakkeli_WS'])
+        writer.writerows(log_rivit)
+
+    print(f"✅ VALMIS: Petrin speksin mukainen data kerätty (DeltaT: {log_rivit[0][7]}°C)")
+
+# --- APUFUNKTIOT (Pidetään samassa tiedostossa) ---
+def hae_suomen_aika_offset(pvm_utc):
+    vuosi = pvm_utc.year
+    maalis_loppu = datetime(vuosi, 3, 31, 1)
+    alku = maalis_loppu - timedelta(days=(maalis_loppu.weekday() + 1) % 7)
+    loka_loppu = datetime(vuosi, 10, 31, 1)
+    loppu = loka_loppu - timedelta(days=(loka_loppu.weekday() + 1) % 7)
+    return 3 if alku <= pvm_utc < loppu else 2
+
+def hae_kerroin(pvm_obj_utc, suunta):
+    coeffs = lataa_kertoimet()
+    if not coeffs: return 0.55
+    offset = hae_suomen_aika_offset(pvm_obj_utc)
+    suomen_aika = pvm_obj_utc + timedelta(hours=offset)
+    kk, tunti = str(suomen_aika.month), str(suomen_aika.hour)
+    sektori = str(int(suunta // 10) * 10)
+    try: return coeffs[kk][sektori][tunti]
+    except: return 0.55
+
+def lataa_kertoimet():
+    if os.path.exists(COEFFS_FILE):
+        with open(COEFFS_FILE, 'r') as f: return json.load(f)
+    return None
 
 if __name__ == "__main__":
     paivita_ennuste()
