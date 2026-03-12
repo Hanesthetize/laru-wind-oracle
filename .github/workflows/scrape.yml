@@ -3,22 +3,24 @@ name: Laru Wind Scraper & Oracle
 on:
   schedule:
     - cron: '*/20 * * * *'  # Ajaa 20 minuutin välein
-  workflow_dispatch:        # Manuaalinen käynnistys
+  workflow_dispatch:        # Sallii manuaalisen testiajon nappia painamalla
 
 jobs:
   scrape_and_predict:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write       # TÄRKEÄ: Sallii tiedostojen tallennuksen takaisin repoon
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
       - name: Install dependencies
         run: |
-          pip install requests gspread google-auth fmiopendata numpy
+          pip install requests gspread google-auth numpy fmiopendata
 
       - name: Run Telegram Bot & Sheets Update
         env:
@@ -27,20 +29,21 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python oracle.py
 
-      - name: Run Oracle Forecast (Web-sivu)
+      - name: Run Oracle Forecast (Web-sivu & Petri-log)
         run: python ennusta_laru.py
 
-      - name: Run History Logger (CSV)
+      - name: Run History Logger (Toteuma-logi)
         run: python log_toteuma.py
 
-      - name: Save History and Forecast
+      - name: Save Data to Repo
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          # Lisätään tiedostot yksi kerrallaan, jotta puuttuva history.csv ei kaada ajoa
+          
+          # Lisätään kaikki tiedostot (|| true estää kaatumisen jos tiedostoa ei vielä ole)
           git add ennuste.json || true
           git add history.csv || true
+          git add ennuste_vertailu.csv || true
           
-          # Commit vain jos jotain muutosta tapahtui
-          git commit -m "Update wind data and history [skip ci]" || echo "Ei uutta commitattavaa"
+          git commit -m "Update oracle data and logs [skip ci]" || echo "Ei uutta commitattavaa"
           git push || echo "Ei uutta pushattavaa"
