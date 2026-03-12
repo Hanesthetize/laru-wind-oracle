@@ -1,50 +1,76 @@
 import json
+import os
 import requests
 from datetime import datetime
 
-# 1. LATAA KERTOIMET (varmista että tiedosto on samassa kansiossa)
+# --- ASETUKSET ---
+# Varmista, että coeffs.json on samassa kansiossa kuin tämä skripti
+COEFFS_FILE = 'coeffs.json'
+
 def lataa_kertoimet():
-    try:
-        with open('coeffs.json', 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        print("⚠️ coeffs.json ei löytynyt, käytetään oletuskertoimia.")
+    """Lataa dynaamiset kertoimet JSON-tiedostosta."""
+    if os.path.exists(COEFFS_FILE):
+        try:
+            with open(COEFFS_FILE, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"❌ Virhe kertoimien lukemisessa: {e}")
+            return None
+    else:
+        print(f"⚠️ {COEFFS_FILE} ei löytynyt! Käytetään oletuskerrointa 0.55.")
         return None
 
+# Ladataan kertoimet globaaliksi muuttujaksi kerran käynnistyksessä
 COEFFS = lataa_kertoimet()
 
-def laske_laru_ennuste(har_ws, har_dir, pvm_str):
+def hae_kerroin(pvm_obj, suunta):
     """
-    Laskee Laru-ennusteen käyttäen dynaamista matriisia.
-    har_ws: Harmajan nopeus (m/s)
-    har_dir: Harmajan suunta (deg)
-    pvm_str: Ennustehetken aikaleima (ISO-muoto)
+    Etsii matriisista tarkan kertoimen kuukauden, tunnin ja suunnan perusteella.
     """
+    if not COEFFS:
+        return 0.55
+
+    kk = str(pvm_obj.month)
+    tunti = str(pvm_obj.hour)
+    # Ryhmitellään suunta 10 asteen sektoreihin (esim. 227 -> 220)
+    sektori = str(int(suunta // 10) * 10)
+
     try:
-        dt = datetime.fromisoformat(pvm_str.replace('Z', '+00:00'))
-        kk = str(dt.month)
-        tunti = str(dt.hour)
-        # Ryhmitys 10 asteen sektoreihin (esim. 213 -> 210)
-        sektori = str(int(har_dir // 10) * 10)
+        # Haetaan polulla: Kuukausi -> Sektori -> Tunti
+        return COEFFS[kk][sektori][tunti]
+    except KeyError:
+        # Jos tarkkaa osumaa ei löydy (harvinainen suunta/aika), palautetaan turva-arvo
+        return 0.55
 
-        # Haetaan kerroin matriisista
-        if COEFFS and kk in COEFFS and sektori in COEFFS[kk] and tunti in COEFFS[kk][sektori]:
-            kerroin = COEFFS[kk][sektori][tunti]
-        else:
-            # Fallback jos dataa puuttuu juuri tältä tunnilta/suunnalta
-            kerroin = 0.55 
-            
-        return round(har_ws * kerroin, 1)
-    except Exception as e:
-        print(f"Laskentavirhe: {e}")
-        return round(har_ws * 0.55, 1)
+def laske_ennuste():
+    """
+    Hakee Harmajan datan (esimerkki API-kutsusta) ja laskee Laru-ennusteen.
+    Tämä on runko, jota voit muokata FMI-integraatiosi mukaan.
+    """
+    # TÄHÄN: FMI API-kutsu tai muu datalähde
+    # Esimerkkiarvot (Testi 3: 11.3. klo 13:51, Harmaja 7.79 m/s, suunta 227)
+    testi_aika = "2026-03-11T13:51:00Z"
+    har_ws = 7.79
+    har_gust = 9.5
+    har_dir = 227
 
-# --- INTEGRAATIO ENNUSTELISTAN MUODOSTUKSEEN ---
-# Kun looppaat FMI:n ennustedataa läpi:
-# for row in fmi_data:
-#    ws_har = row['windspeed']
-#    dir_har = row['direction']
-#    aika = row['time']
-#    
-#    ws_laru = laske_laru_ennuste(ws_har, dir_har, aika)
-#    print(f"Harmaja: {ws_har}m/s -> Laru: {ws_laru}m/s")
+    # Muunnos datetime-olioksi
+    dt = datetime.fromisoformat(testi_aika.replace('Z', '+00:00'))
+    
+    # Haetaan tarkka kerroin historiasta
+    kerroin = hae_kerroin(dt, har_dir)
+    
+    # Lasketaan Laru-lukemat
+    laru_ws = round(har_ws * kerroin, 1)
+    laru_gust = round(har_gust * kerroin, 1)
+
+    print("--- LARU ORAAKKELI 2.0 ---")
+    print(f"Aika:      {dt.strftime('%d.%m. klo %H:%M')}")
+    print(f"Harmaja:   {har_ws} m/s (suunta {har_dir} deg)")
+    print(f"Kerroin:   {kerroin} (Matriisipohjainen)")
+    print(f"---")
+    print(f"📍 LARU ENNUSTE: {laru_ws} m/s")
+    print(f"🌪️ PUUSKA:       {laru_gust} m/s")
+
+if __name__ == "__main__":
+    laske_ennuste()
