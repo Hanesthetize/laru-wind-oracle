@@ -1,16 +1,6 @@
 [
     {
-        "aika_str": "02.04. 08:08",
-        "har_ms": 8.13,
-        "laru_ms": 2.2,
-        "laru_fmi_ms": 7.33,
-        "har_dir": 218.0,
-        "delta_t": 0.5,
-        "cloud": 100.0,
-        "gust_ms": 2.7
-    },
-    {
-        "aika_str": "02.04. 09:08",
+        "aika_str": "02.04. 09:02",
         "har_ms": 7.96,
         "laru_ms": 2.4,
         "laru_fmi_ms": 7.05,
@@ -20,7 +10,7 @@
         "gust_ms": 3.0
     },
     {
-        "aika_str": "02.04. 10:08",
+        "aika_str": "02.04. 10:02",
         "har_ms": 7.57,
         "laru_ms": 2.3,
         "laru_fmi_ms": 6.85,
@@ -30,7 +20,7 @@
         "gust_ms": 3.0
     },
     {
-        "aika_str": "02.04. 11:08",
+        "aika_str": "02.04. 11:02",
         "har_ms": 6.99,
         "laru_ms": 2.5,
         "laru_fmi_ms": 6.39,
@@ -40,7 +30,7 @@
         "gust_ms": 3.4
     },
     {
-        "aika_str": "02.04. 12:08",
+        "aika_str": "02.04. 12:02",
         "har_ms": 6.46,
         "laru_ms": 2.5,
         "laru_fmi_ms": 5.59,
@@ -50,7 +40,7 @@
         "gust_ms": 3.3
     },
     {
-        "aika_str": "02.04. 13:08",
+        "aika_str": "02.04. 13:02",
         "har_ms": 6.29,
         "laru_ms": 3.8,
         "laru_fmi_ms": 5.57,
@@ -60,7 +50,7 @@
         "gust_ms": 4.7
     },
     {
-        "aika_str": "02.04. 14:08",
+        "aika_str": "02.04. 14:02",
         "har_ms": 6.44,
         "laru_ms": 2.7,
         "laru_fmi_ms": 5.99,
@@ -70,7 +60,7 @@
         "gust_ms": 3.3
     },
     {
-        "aika_str": "02.04. 15:08",
+        "aika_str": "02.04. 15:02",
         "har_ms": 5.58,
         "laru_ms": 2.6,
         "laru_fmi_ms": 5.33,
@@ -80,7 +70,7 @@
         "gust_ms": 3.7
     },
     {
-        "aika_str": "02.04. 16:08",
+        "aika_str": "02.04. 16:02",
         "har_ms": 5.92,
         "laru_ms": 2.7,
         "laru_fmi_ms": 5.32,
@@ -90,7 +80,7 @@
         "gust_ms": 3.2
     },
     {
-        "aika_str": "02.04. 17:08",
+        "aika_str": "02.04. 17:02",
         "har_ms": 6.62,
         "laru_ms": 2.3,
         "laru_fmi_ms": 5.95,
@@ -100,7 +90,7 @@
         "gust_ms": 2.7
     },
     {
-        "aika_str": "02.04. 18:08",
+        "aika_str": "02.04. 18:02",
         "har_ms": 6.99,
         "laru_ms": 6.2,
         "laru_fmi_ms": 6.01,
@@ -110,7 +100,7 @@
         "gust_ms": 7.6
     },
     {
-        "aika_str": "02.04. 19:08",
+        "aika_str": "02.04. 19:02",
         "har_ms": 6.45,
         "laru_ms": 2.2,
         "laru_fmi_ms": 5.26,
@@ -120,7 +110,7 @@
         "gust_ms": 2.9
     },
     {
-        "aika_str": "02.04. 20:08",
+        "aika_str": "02.04. 20:02",
         "har_ms": 6.74,
         "laru_ms": 1.5,
         "laru_fmi_ms": 5.37,
@@ -130,7 +120,7 @@
         "gust_ms": 1.8
     },
     {
-        "aika_str": "02.04. 21:08",
+        "aika_str": "02.04. 21:02",
         "har_ms": 6.55,
         "laru_ms": 1.2,
         "laru_fmi_ms": 5.24,
@@ -140,7 +130,7 @@
         "gust_ms": 1.5
     },
     {
-        "aika_str": "02.04. 22:08",
+        "aika_str": "02.04. 22:02",
         "har_ms": 6.48,
         "laru_ms": 1.1,
         "laru_fmi_ms": 4.87,
@@ -150,7 +140,7 @@
         "gust_ms": 1.4
     },
     {
-        "aika_str": "02.04. 23:08",
+        "aika_str": "02.04. 23:02",
         "har_ms": 6.48,
         "laru_ms": 1.8,
         "laru_fmi_ms": 5.0,
@@ -160,7 +150,7 @@
         "gust_ms": 2.1
     },
     {
-        "aika_str": "03.04. 00:08",
+        "aika_str": "03.04. 00:02",
         "har_ms": 6.56,
         "laru_ms": 1.7,
         "laru_fmi_ms": 4.58,
@@ -170,7 +160,7 @@
         "gust_ms": 2.1
     },
     {
-        "aika_str": "03.04. 01:08",
+        "aika_str": "03.04. 01:02",
         "har_ms": 5.78,
         "laru_ms": 1.7,
         "laru_fmi_ms": 3.53,
@@ -180,7 +170,7 @@
         "gust_ms": 2.3
     },
     {
-        "aika_str": "03.04. 02:08",
+        "aika_str": "03.04. 02:02",
         "har_ms": 4.8,
         "laru_ms": 1.3,
         "laru_fmi_ms": 2.73,
@@ -190,7 +180,7 @@
         "gust_ms": 1.8
     },
     {
-        "aika_str": "03.04. 03:08",
+        "aika_str": "03.04. 03:02",
         "har_ms": 4.82,
         "laru_ms": 1.8,
         "laru_fmi_ms": 2.7,
@@ -200,7 +190,7 @@
         "gust_ms": 2.2
     },
     {
-        "aika_str": "03.04. 04:08",
+        "aika_str": "03.04. 04:02",
         "har_ms": 3.55,
         "laru_ms": 1.5,
         "laru_fmi_ms": 3.15,
@@ -210,7 +200,7 @@
         "gust_ms": 2.5
     },
     {
-        "aika_str": "03.04. 05:08",
+        "aika_str": "03.04. 05:02",
         "har_ms": 3.41,
         "laru_ms": 1.5,
         "laru_fmi_ms": 3.07,
@@ -220,7 +210,7 @@
         "gust_ms": 1.8
     },
     {
-        "aika_str": "03.04. 06:08",
+        "aika_str": "03.04. 06:02",
         "har_ms": 3.2,
         "laru_ms": 1.3,
         "laru_fmi_ms": 2.77,
@@ -230,7 +220,7 @@
         "gust_ms": 1.6
     },
     {
-        "aika_str": "03.04. 07:08",
+        "aika_str": "03.04. 07:02",
         "har_ms": 3.01,
         "laru_ms": 1.3,
         "laru_fmi_ms": 2.54,
@@ -238,5 +228,15 @@
         "delta_t": 0.9,
         "cloud": 100.0,
         "gust_ms": 1.7
+    },
+    {
+        "aika_str": "03.04. 08:02",
+        "har_ms": 2.96,
+        "laru_ms": 1.8,
+        "laru_fmi_ms": 2.58,
+        "har_dir": 268.0,
+        "delta_t": 1.1,
+        "cloud": 100.0,
+        "gust_ms": 2.1
     }
 ]
