@@ -1,15 +1,5 @@
 [
     {
-        "aika_str": "07.08. 19:29",
-        "har_ms": 7.24,
-        "laru_ms": 4.1,
-        "laru_fmi_ms": 6.55,
-        "har_dir": 283.0,
-        "delta_t": 2.1,
-        "cloud": 27.8,
-        "gust_ms": 5.0
-    },
-    {
         "aika_str": "07.08. 20:29",
         "har_ms": 6.85,
         "laru_ms": 4.8,
@@ -238,5 +228,15 @@
         "delta_t": 2.7,
         "cloud": 3.2,
         "gust_ms": 7.7
+    },
+    {
+        "aika_str": "08.08. 19:29",
+        "har_ms": 6.37,
+        "laru_ms": 4.5,
+        "laru_fmi_ms": 5.9,
+        "har_dir": 279.0,
+        "delta_t": 2.2,
+        "cloud": 0.0,
+        "gust_ms": 5.5
     }
 ]
